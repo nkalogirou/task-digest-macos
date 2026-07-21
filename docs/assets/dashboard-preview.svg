@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Task Digest dashboard preview</title>
+  <desc id="desc">A dark macOS dashboard with summary metrics, a daily plan, task cards, GitHub reviews, and waiting work.</desc>
+  <rect width="1200" height="720" rx="24" fill="#0b0f18"/>
+  <rect x="0" y="0" width="222" height="720" rx="24" fill="#111725"/>
+  <text x="32" y="54" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="18" font-weight="750" fill="#f8fafc">✓ Task Digest</text>
+  <g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="15" fill="#9aa6bc">
+    <text x="34" y="112" fill="#c4b5fd">Dashboard</text>
+    <text x="34" y="154">Stand-up</text><text x="34" y="196">Rules</text>
+    <text x="34" y="238">Relationships</text><text x="34" y="280">History</text>
+    <text x="34" y="322">Settings</text><text x="34" y="364">System</text>
+  </g>
+  <g transform="translate(262 42)" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif">
+    <text x="0" y="24" font-size="34" font-weight="760" fill="#f8fafc">Good morning</text>
+    <text x="0" y="53" font-size="15" fill="#8692a7">Four items need your attention. One review is waiting.</text>
+    <g transform="translate(0 82)">
+      <rect width="203" height="88" rx="16" fill="#151c2b" stroke="#283249"/><text x="18" y="30" font-size="13" fill="#8c98ad">NEEDS ACTION</text><text x="18" y="65" font-size="30" font-weight="750" fill="#f8fafc">4</text>
+      <rect x="218" width="203" height="88" rx="16" fill="#151c2b" stroke="#283249"/><text x="236" y="30" font-size="13" fill="#8c98ad">GITHUB REVIEWS</text><text x="236" y="65" font-size="30" font-weight="750" fill="#f8fafc">1</text>
+      <rect x="436" width="203" height="88" rx="16" fill="#151c2b" stroke="#283249"/><text x="454" y="30" font-size="13" fill="#8c98ad">WAITING</text><text x="454" y="65" font-size="30" font-weight="750" fill="#f8fafc">2</text>
+      <rect x="654" width="203" height="88" rx="16" fill="#151c2b" stroke="#283249"/><text x="672" y="30" font-size="13" fill="#8c98ad">UPDATES</text><text x="672" y="65" font-size="30" font-weight="750" fill="#f8fafc">3</text>
+    </g>
+    <rect x="0" y="196" width="858" height="154" rx="18" fill="#141b2a" stroke="#5b4fc7"/>
+    <text x="22" y="226" font-size="13" font-weight="700" fill="#a99cff">TODAY'S PLAN</text>
+    <g font-size="16" fill="#e5e7eb"><text x="24" y="264">1. Fix failing checks on PR #142</text><text x="24" y="300">2. Review access-control changes</text><text x="24" y="336">3. Continue onboarding tests</text></g>
+    <text x="0" y="392" font-size="20" font-weight="700" fill="#f8fafc">Needs action</text>
+    <g transform="translate(0 414)">
+      <rect width="858" height="104" rx="18" fill="#151c2b" stroke="#2b354d"/>
+      <rect width="5" height="104" rx="3" fill="#fb7185"/>
+      <text x="24" y="31" font-size="17" font-weight="700" fill="#e9edff">Improve permission coverage</text>
+      <text x="24" y="58" font-size="14" fill="#8f9bb0">In Development for 4 working days · due tomorrow</text>
+      <text x="24" y="84" font-size="14" fill="#8b7cff">PR #142 · checks failing</text>
+    </g>
+    <text x="0" y="558" font-size="20" font-weight="700" fill="#f8fafc">Waiting on others</text>
+    <g transform="translate(0 580)">
+      <rect width="858" height="94" rx="18" fill="#151c2b" stroke="#2b354d"/>
+      <rect width="5" height="94" rx="3" fill="#fbbf24"/>
+      <text x="24" y="31" font-size="17" font-weight="700" fill="#e9edff">Refactor test fixtures</text>
+      <text x="24" y="58" font-size="14" fill="#8f9bb0">Waiting for review from @reviewer · follow-up suggested</text>
+    </g>
+  </g>
+</svg>

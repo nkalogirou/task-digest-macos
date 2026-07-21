@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">Task Digest</title>
+  <desc id="desc">A local-first macOS work dashboard for Asana and GitHub.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1020"/>
+      <stop offset="1" stop-color="#17112c"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8b7cff"/>
+      <stop offset="1" stop-color="#5eead4"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="360" rx="28" fill="url(#bg)"/>
+  <circle cx="1060" cy="70" r="180" fill="#8b7cff" opacity=".08"/>
+  <circle cx="110" cy="330" r="200" fill="#5eead4" opacity=".06"/>
+  <g transform="translate(86 74)">
+    <rect x="0" y="0" width="108" height="108" rx="28" fill="url(#accent)"/>
+    <path d="M28 55l17 17 36-41" fill="none" stroke="#08111d" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="0" y="170" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="58" font-weight="750" fill="#f8fafc">Task Digest</text>
+    <text x="0" y="218" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="25" fill="#aeb7c7">Your work, distilled.</text>
+    <text x="0" y="260" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="19" fill="#7f8ba3">Asana tasks · GitHub reviews · smart priorities · local macOS dashboard</text>
+  </g>
+  <g transform="translate(730 68)" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif">
+    <rect width="390" height="224" rx="22" fill="#131a2a" stroke="#2c3650"/>
+    <text x="25" y="38" font-size="14" font-weight="700" fill="#8b7cff">TODAY'S PLAN</text>
+    <g transform="translate(24 58)">
+      <rect width="342" height="43" rx="12" fill="#1b2336"/>
+      <circle cx="22" cy="21" r="7" fill="#fb7185"/>
+      <text x="42" y="26" font-size="15" fill="#e5e7eb">Fix failing checks on PR #142</text>
+    </g>
+    <g transform="translate(24 111)">
+      <rect width="342" height="43" rx="12" fill="#1b2336"/>
+      <circle cx="22" cy="21" r="7" fill="#fbbf24"/>
+      <text x="42" y="26" font-size="15" fill="#e5e7eb">Review access-control changes</text>
+    </g>
+    <g transform="translate(24 164)">
+      <rect width="342" height="43" rx="12" fill="#1b2336"/>
+      <circle cx="22" cy="21" r="7" fill="#34d399"/>
+      <text x="42" y="26" font-size="15" fill="#e5e7eb">Continue onboarding tests</text>
+    </g>
+  </g>
+</svg>

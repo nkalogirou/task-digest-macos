@@ -1,0 +1,34 @@
+# Secrets and local configuration
+.env
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+
+# Task Digest local data
+state/*.json
+state/dashboard_token
+output/*.html
+logs/*.log
+history/*.html
+history/*.md
+backups/*.zip
+
+# macOS / editors
+.DS_Store
+.idea/
+.vscode/
+
+# Keep directory placeholders
+!state/.gitkeep
+!output/.gitkeep
+!logs/.gitkeep
+!history/.gitkeep
+!backups/.gitkeep
