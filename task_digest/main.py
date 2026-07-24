@@ -470,6 +470,7 @@ def main() -> int:
     )
     parser.add_argument("--no-notify", action="store_true", help="Do not show a macOS notification.")
     parser.add_argument("--open-report", action="store_true", help="Open the generated HTML report in your browser.")
+    parser.add_argument("--demo", action="store_true", help="Generate a sanitized demonstration dashboard without external credentials.")
 
     controls = parser.add_mutually_exclusive_group()
     controls.add_argument("--list-items", action="store_true", help="List current task keys for snoozing or ignoring.")
@@ -481,6 +482,14 @@ def main() -> int:
     parser.add_argument("--working-days", type=int, default=1, help="Working days for --snooze (default: 1).")
 
     args = parser.parse_args()
+    if args.demo:
+        from .demo import render_demo_report
+
+        report = render_demo_report()
+        print(f"Demo dashboard: {report}")
+        if args.open_report:
+            open_report(report)
+        return 0
     config = Config.load()
     managed = _manage_preferences(args, config)
     if managed is not None:

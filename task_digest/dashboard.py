@@ -26,12 +26,14 @@ from .diagnostics import (
     restart_service,
     tail_log,
 )
+from .demo import demo_config, demo_source_statuses, demo_summaries, demo_tasks
 from .digest import (
     github_authored_prs,
     github_reviews,
     render_html,
     split_tasks,
 )
+from .enrichment import apply_local_workspace
 from .journal import ActivityJournal
 from .main import _resolve_item, collect_tasks
 from .models import SourceStatus, TaskItem
@@ -51,9 +53,10 @@ from .ui import SIMPLE_PAGE_CSS, brand_html, command_palette_html, command_palet
 class DashboardServer(ThreadingHTTPServer):
     daemon_threads = True
 
-    def __init__(self, address: tuple[str, int], config: Config) -> None:
+    def __init__(self, address: tuple[str, int], config: Config, demo: bool = False) -> None:
         super().__init__(address, DashboardHandler)
         self.config = config
+        self.demo = demo
         self.action_token = get_or_create_action_token(config.dashboard_token_file)
         self.cache_lock = threading.Lock()
         self.cached_html = ""
@@ -75,26 +78,38 @@ class DashboardServer(ThreadingHTTPServer):
                 )
 
         now = datetime.now().astimezone()
-        collection = collect_tasks(self.config, now)
+        if self.demo:
+            tasks = demo_tasks(now)
+            if Path(self.config.workspace_file).exists():
+                apply_local_workspace(tasks, WorkspaceState(self.config.workspace_file), now)
+            collection_tasks = tasks
+            collection_statuses = demo_source_statuses()
+            collection_warning = None
+        else:
+            collection = collect_tasks(self.config, now)
+            collection_tasks = collection.tasks
+            collection_statuses = collection.source_statuses
+            collection_warning = collection.github_warning
         preferences = TaskPreferences(self.config.preferences_file)
-        result = preferences.filter(collection.tasks, now.date())
-        collection.source_statuses.append(
-            SourceStatus(
-                name="Local filters",
-                ok=True,
-                detail=f"{result.snoozed_count} snoozed · {result.ignored_count} ignored",
+        result = preferences.filter(collection_tasks, now.date())
+        if not self.demo:
+            collection_statuses.append(
+                SourceStatus(
+                    name="Local filters",
+                    ok=True,
+                    detail=f"{result.snoozed_count} snoozed · {result.ignored_count} ignored",
+                )
             )
-        )
         with self.cache_lock:
             self.cached_tasks = result.visible
-            self.cached_statuses = collection.source_statuses
-            self.cached_github_warning = collection.github_warning
+            self.cached_statuses = collection_statuses
+            self.cached_github_warning = collection_warning
             self.cached_hidden = (result.snoozed_count, result.ignored_count)
             self.cached_at = time.time()
         return (
             result.visible,
-            collection.source_statuses,
-            collection.github_warning,
+            collection_statuses,
+            collection_warning,
             (result.snoozed_count, result.ignored_count),
         )
 
@@ -108,7 +123,7 @@ class DashboardServer(ThreadingHTTPServer):
         now = datetime.now().astimezone()
         state = DigestState(self.config.state_file)
         changes = compare_snapshots(state.get_snapshot(), tasks)
-        summaries = ActivityJournal(self.config.journal_file).summaries(now.date())
+        summaries = demo_summaries() if self.demo else ActivityJournal(self.config.journal_file).summaries(now.date())
         report = render_html(
             tasks,
             now,
@@ -125,6 +140,7 @@ class DashboardServer(ThreadingHTTPServer):
             asana_write_enabled=self.config.enable_asana_write_actions,
             smart_plan_max_items=self.config.smart_plan_max_items,
             smart_plan_stale_waiting_limit=self.config.smart_plan_stale_waiting_limit,
+            demo_mode=self.demo,
         )
         rendered = report.read_text(encoding="utf-8")
         with self.cache_lock:
@@ -139,7 +155,7 @@ class DashboardServer(ThreadingHTTPServer):
         focus = sorted([task for task in tasks if task.is_focused], key=lambda task: task.focus_rank or 0)
         workspace = WorkspaceState(self.config.workspace_file)
         paused_until = workspace.notifications_paused_until()
-        summaries = ActivityJournal(self.config.journal_file).summaries(datetime.now().astimezone().date())
+        summaries = demo_summaries() if self.demo else ActivityJournal(self.config.journal_file).summaries(datetime.now().astimezone().date())
         return {
             "action": len(action),
             "waiting": len(waiting),
@@ -161,8 +177,12 @@ class DashboardServer(ThreadingHTTPServer):
         services = inspect_services()
         _, statuses, github_warning, hidden = self.collect_visible(force=force_sources)
         next_run, next_period = next_scheduled_run(self.config, now)
-        github_ok, github_detail = github_auth_status(self.config.github_cli_path)
-        token_source = "Environment variable" if os.getenv("ASANA_TOKEN", "").strip() else "macOS Keychain"
+        if self.demo:
+            github_ok, github_detail = True, "Demo mode: GitHub authentication is not required"
+            token_source = "demo data"
+        else:
+            github_ok, github_detail = github_auth_status(self.config.github_cli_path)
+            token_source = "Environment variable" if os.getenv("ASANA_TOKEN", "").strip() else "macOS Keychain"
         return {
             "services": [
                 {
@@ -186,7 +206,7 @@ class DashboardServer(ThreadingHTTPServer):
             ],
             "github_warning": github_warning,
             "github_auth": {"ok": github_ok, "detail": github_detail},
-            "asana_auth": {"ok": bool(self.config.asana_token), "detail": f"Token available through {token_source}"},
+            "asana_auth": {"ok": True if self.demo else bool(self.config.asana_token), "detail": ("Demo mode: Asana authentication is not required" if self.demo else f"Token available through {token_source}")},
             "hidden": {"snoozed": hidden[0], "ignored": hidden[1]},
             "last_refresh": datetime.fromtimestamp(self.cached_at, tz=now.tzinfo).isoformat() if self.cached_at else None,
             "project_dir": str(Path.cwd()),
@@ -331,6 +351,13 @@ class DashboardHandler(BaseHTTPRequestHandler):
     def _apply_action(self, values: dict[str, str]) -> object:
         action = values.get("action", "")
         key = values.get("key", "")
+        if self.server.demo and action in {
+            "restart_service", "restart_all", "test_notification", "open_logs",
+            "save_settings", "create_backup", "restore_backup",
+            "asana_complete", "asana_unassign", "asana_due_date", "asana_comment",
+            "asana_move_section", "asana_set_status",
+        }:
+            raise RuntimeError("This action is disabled in demo mode.")
         workspace = WorkspaceState(self.server.config.workspace_file)
         now = datetime.now().astimezone()
 
@@ -1010,12 +1037,19 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run the local Task Digest dashboard.")
     parser.add_argument("--host", default=None)
     parser.add_argument("--port", type=int, default=None)
+    parser.add_argument("--demo", action="store_true", help="Run with sanitized demonstration data and no external credentials.")
     args = parser.parse_args()
-    config = Config.load()
-    host = args.host or config.dashboard_host
-    port = args.port or config.dashboard_port
-    server = DashboardServer((host, port), config)
-    print(f"Task Digest dashboard: http://{host}:{port}")
+    if args.demo:
+        host = args.host or "127.0.0.1"
+        port = args.port or 8777
+        config = demo_config(host, port)
+    else:
+        config = Config.load()
+        host = args.host or config.dashboard_host
+        port = args.port or config.dashboard_port
+    server = DashboardServer((host, port), config, demo=args.demo)
+    label = "Task Digest demo" if args.demo else "Task Digest dashboard"
+    print(f"{label}: http://{host}:{port}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

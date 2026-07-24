@@ -4,6 +4,15 @@ All notable changes to Task Digest are documented here.
 
 The project follows semantic versioning for public releases.
 
+## [1.0.11] - 2026-07-24
+
+### Added
+
+- Credential-free demo mode with realistic, sanitized Asana and GitHub sample data.
+- Interactive demo dashboard on `127.0.0.1:8777` via `scripts/run_demo.sh`.
+- Static demo report generation through `python -m task_digest --demo`.
+- Visible Demo data badge and isolated demo state files for safe screenshots and product tours.
+
 ## [1.0.10] - 2026-07-24
 
 ### Added

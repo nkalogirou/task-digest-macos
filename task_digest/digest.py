@@ -37,6 +37,8 @@ DASHBOARD_CSS = SHARED_CSS + r"""
   backdrop-filter: blur(18px) saturate(1.2);
 }
 .dashboard-header .page-header { margin-bottom: 0; }
+.title-line { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.demo-mode-badge { display: inline-flex; align-items: center; min-height: 25px; padding: 4px 9px; border: 1px solid color-mix(in srgb,var(--accent) 35%,var(--border)); border-radius: 999px; color: var(--accent); background: var(--accent-soft); font-size: 11px; font-weight: 720; letter-spacing: .02em; }
 .header-status {
   display: inline-flex;
   align-items: center;
@@ -1377,6 +1379,7 @@ def render_html(
     asana_write_enabled: bool = False,
     smart_plan_max_items: int = 5,
     smart_plan_stale_waiting_limit: int = 1,
+    demo_mode: bool = False,
 ) -> Path:
     global _ACTION_TOKEN, _DASHBOARD_URL, _ASANA_WRITE_ENABLED
     _ACTION_TOKEN = action_token
@@ -1398,6 +1401,7 @@ def render_html(
   <p class="sidebar-note">Runs locally on your Mac. Drafts stay hidden and your credentials remain in Keychain.</p>
 </div>'''
     sidebar = f'<aside class="app-sidebar">{brand_html()}{navigation_html(base, active_path="/")}{sidebar_actions}</aside>'
+    demo_badge = '<span class="demo-mode-badge">Demo data</span>' if demo_mode else ''
     auto_refresh = f'<script>setTimeout(()=>window.location.reload(),{max(1, refresh_minutes) * 60000});</script>' if dashboard_url else ""
     meta = _source_status_html(source_statuses) + _summary_panel(summaries)
     focus_html = _focus_section(tasks, now.date(), smart_plan_max_items, smart_plan_stale_waiting_limit)
@@ -1416,7 +1420,7 @@ def render_html(
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Your task digest</title>
 <style>{DASHBOARD_CSS}</style></head>
-<body><div class="app-shell">{sidebar}<main class="app-main"><div class="app-content"><header class="dashboard-header"><div class="page-header"><div class="page-title-wrap"><span class="eyebrow">Overview</span><h1>Your task digest</h1><p class="page-subtitle">{escape(subtitle)} · {now:%A, %d %B %Y at %H:%M}</p></div><div class="header-status">Auto-refresh every {max(1, refresh_minutes)} min</div></div></header>
+<body><div class="app-shell">{sidebar}<main class="app-main"><div class="app-content"><header class="dashboard-header"><div class="page-header"><div class="page-title-wrap"><span class="eyebrow">Overview</span><div class="title-line"><h1>Your task digest</h1>{demo_badge}</div><p class="page-subtitle">{escape(subtitle)} · {now:%A, %d %B %Y at %H:%M}</p></div><div class="header-status">Auto-refresh every {max(1, refresh_minutes)} min</div></div></header>
 {focus_html}
 <div class="dashboard-controls"><div class="search-wrap"><input id="task-search" type="search" placeholder="Search tasks, PRs, projects…" aria-label="Search tasks"></div><div class="filter-bar"><button type="button" class="active" data-view="all">All</button><button type="button" data-view="action">Action</button><button type="button" data-view="github">GitHub</button><button type="button" data-view="waiting">Waiting</button><button type="button" data-view="unread">Updates</button></div></div>
 <div class="search-helper"><span id="search-result-count" class="search-result-count">Showing all tasks</span><span class="search-examples">Try <button type="button" data-search-example="is:failing">is:failing</button><button type="button" data-search-example="is:waiting">is:waiting</button><button type="button" data-search-example="status:&quot;In Review&quot;">status:In Review</button><button type="button" data-search-example="repo:">repo:</button><button type="button" data-search-example="pr:">pr:</button><button type="button" id="reset-dashboard-state" class="reset-view">Reset view</button></span></div>

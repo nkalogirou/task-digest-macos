@@ -1,3 +1,20 @@
+
+## Optional: run demo mode first
+
+Demo mode lets you inspect the dashboard with built-in sanitized data before configuring Asana or GitHub:
+
+```bash
+scripts/run_demo.sh
+```
+
+The demo runs on `http://127.0.0.1:8777` and does not require `.env`, Keychain credentials, or GitHub CLI authentication. Stop it with `Control+C`.
+
+A static preview can be created with:
+
+```bash
+python -m task_digest --demo --open-report
+```
+
 # Local setup guide
 
 This guide explains every step required to run Task Digest on a Mac. The guided `scripts/setup_local.sh` script performs the same steps interactively.

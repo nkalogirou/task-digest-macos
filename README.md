@@ -66,6 +66,27 @@ Local state ──────────────────────�
 
 Task Digest is currently designed for **one person running it locally on one Mac**. Asana recommends OAuth for distributed multi-user applications; this project uses a personal access token because it is a personal local tool.
 
+
+## Try the interface with demo data
+
+You can explore Task Digest before creating an Asana token or signing in to GitHub. Demo mode uses sanitized, built-in sample tasks and does not contact external services.
+
+Start the interactive dashboard:
+
+```bash
+scripts/run_demo.sh
+```
+
+It opens at `http://127.0.0.1:8777` and includes sample Asana tasks, review requests, pull-request blockers, comments, dependencies, waiting work, and an optional investigation. A visible **Demo data** badge distinguishes it from a real workspace.
+
+To generate a standalone HTML preview instead:
+
+```bash
+python -m task_digest --demo --open-report
+```
+
+Demo mode stores any temporary focus, note, or snooze changes in separate `state/demo_*` files. It never reads your Asana token or GitHub CLI credentials.
+
 ## Quick start
 
 ### 1. Clone the repository
