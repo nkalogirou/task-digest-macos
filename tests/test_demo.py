@@ -6,6 +6,7 @@ from pathlib import Path
 from task_digest.dashboard import DashboardServer
 from task_digest.demo import demo_config, demo_source_statuses, demo_tasks, render_demo_report
 from task_digest.main import main
+from task_digest.tour import TOUR_STEPS, inject_demo_tour
 
 
 def test_demo_config_is_isolated_and_credential_free() -> None:
@@ -66,3 +67,28 @@ def test_main_demo_does_not_require_environment(tmp_path: Path, monkeypatch) -> 
     monkeypatch.setattr("sys.argv", ["task-digest", "--demo"])
     assert main() == 0
     assert (tmp_path / "output" / "demo-dashboard.html").exists()
+
+
+def test_guided_demo_tour_assets_are_injected() -> None:
+    page = inject_demo_tour("<html><body><main></main></body></html>")
+    assert 'id="tour-popover"' in page
+    assert "Start guided tour" in page
+    assert "Today’s Plan" in page
+    assert len(TOUR_STEPS) >= 6
+
+
+def test_demo_server_can_render_guided_tour(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    server = DashboardServer(("127.0.0.1", 0), demo_config(port=0), demo=True)
+    try:
+        rendered = server.render_dashboard(force=True, tour=True)
+        assert 'id="tour-popover"' in rendered
+        assert "Demo data" in rendered
+    finally:
+        server.server_close()
+
+
+def test_demo_tour_script_exists_and_is_executable() -> None:
+    script = Path(__file__).parents[1] / "scripts" / "run_demo_tour.sh"
+    assert script.exists()
+    assert script.stat().st_mode & 0o111

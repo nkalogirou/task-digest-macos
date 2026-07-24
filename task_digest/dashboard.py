@@ -45,6 +45,7 @@ from .relationships import has_relationships, relationship_tree_html
 from .rules import ACTION_LABELS, CONDITION_LABELS, SOURCE_LABELS, RuleStore, describe_rule
 from .settings import BOOLEAN_KEYS, EDITABLE_KEYS, read_settings, save_settings
 from .standup import build_standup, render_standup_page, save_standup
+from .tour import inject_demo_tour
 from .state import DigestState
 from .workspace import WorkspaceState
 from .ui import SIMPLE_PAGE_CSS, brand_html, command_palette_html, command_palette_script, navigation_html
@@ -113,7 +114,7 @@ class DashboardServer(ThreadingHTTPServer):
             (result.snoozed_count, result.ignored_count),
         )
 
-    def render_dashboard(self, force: bool = False) -> str:
+    def render_dashboard(self, force: bool = False, tour: bool = False) -> str:
         ttl = max(30, self.config.dashboard_refresh_minutes * 60)
         with self.cache_lock:
             if not force and self.cached_html and time.time() - self.cached_at < ttl:
@@ -143,6 +144,8 @@ class DashboardServer(ThreadingHTTPServer):
             demo_mode=self.demo,
         )
         rendered = report.read_text(encoding="utf-8")
+        if tour:
+            return inject_demo_tour(rendered, auto_start=True)
         with self.cache_lock:
             self.cached_html = rendered
             self.cached_at = time.time()
@@ -257,6 +260,15 @@ class DashboardHandler(BaseHTTPRequestHandler):
         if path == "/":
             try:
                 self._send_html(self.server.render_dashboard())
+            except Exception as exc:
+                self._send_html(self._error_page(exc), HTTPStatus.INTERNAL_SERVER_ERROR)
+            return
+        if path == "/tour":
+            if not self.server.demo:
+                self.send_error(HTTPStatus.NOT_FOUND)
+                return
+            try:
+                self._send_html(self.server.render_dashboard(force=True, tour=True))
             except Exception as exc:
                 self._send_html(self._error_page(exc), HTTPStatus.INTERNAL_SERVER_ERROR)
             return

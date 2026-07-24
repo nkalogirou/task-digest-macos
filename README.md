@@ -79,6 +79,14 @@ scripts/run_demo.sh
 
 It opens at `http://127.0.0.1:8777` and includes sample Asana tasks, review requests, pull-request blockers, comments, dependencies, waiting work, and an optional investigation. A visible **Demo data** badge distinguishes it from a real workspace.
 
+Start the guided product tour:
+
+```bash
+scripts/run_demo_tour.sh
+```
+
+The tour highlights Today’s Plan, structured search, workload metrics, task and pull-request context, waiting work, and the wider toolset. See [`docs/DEMO.md`](docs/DEMO.md) for public recording and screenshot guidance.
+
 To generate a standalone HTML preview instead:
 
 ```bash

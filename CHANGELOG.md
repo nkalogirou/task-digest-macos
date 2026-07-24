@@ -4,6 +4,14 @@ All notable changes to Task Digest are documented here.
 
 The project follows semantic versioning for public releases.
 
+## [1.0.12] - 2026-07-24
+
+### Added
+
+- Credential-free guided product tour for the sanitized demo dashboard.
+- A dedicated demo-tour launcher and public recording guide.
+- Keyboard navigation and accessible tour controls for presenting the core workflow.
+
 ## [1.0.11] - 2026-07-24
 
 ### Added

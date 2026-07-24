@@ -1,3 +1,3 @@
 """Task Digest: a local-first macOS work dashboard for Asana and GitHub."""
 
-__version__ = "1.0.11"
+__version__ = "1.0.12"
