@@ -118,7 +118,17 @@ class BackupManager:
         for item in self.backup_dir.glob(prefix + "*-automatic.zip") if self.backup_dir.exists() else ():
             if item.is_file():
                 return None
-        return self.create("automatic")
+
+        # Use the requested date when naming the backup. This keeps the method
+        # deterministic for tests and also handles callers that deliberately
+        # create a backup for a date other than the wall-clock date.
+        local_now = datetime.now().astimezone()
+        backup_time = local_now.replace(
+            year=today.year,
+            month=today.month,
+            day=today.day,
+        )
+        return self.create("automatic", now=backup_time)
 
     def list(self) -> list[BackupInfo]:
         if not self.backup_dir.exists():

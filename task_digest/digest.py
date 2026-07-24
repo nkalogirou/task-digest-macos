@@ -130,6 +130,35 @@ input[type=search] {
 .summary-card.tone-success { --metric-color: var(--success); }
 .summary-card.tone-info { --metric-color: var(--info); }
 .summary-card.tone-accent { --metric-color: var(--accent); }
+.dashboard-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(340px, .9fr);
+  gap: 20px;
+  align-items: start;
+  margin-top: 20px;
+}
+.dashboard-primary, .dashboard-secondary { min-width: 0; }
+.dashboard-secondary {
+  position: sticky;
+  top: 104px;
+  display: grid;
+  gap: 12px;
+}
+.dashboard-column-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 2px 10px;
+}
+.dashboard-column-heading h2 { margin: 0; font-size: 17px; }
+.dashboard-column-heading span { color: var(--muted); font-size: 11px; }
+.dashboard-primary > :first-child, .dashboard-secondary > :first-child { margin-top: 0; }
+.dashboard-secondary .meta-panel,
+.dashboard-secondary .work-section,
+.dashboard-secondary .optional-section { margin: 0; }
+.dashboard-secondary .section-content,
+.dashboard-secondary .optional-content { padding-inline: 9px; }
 .meta-panel, .work-section, .optional-section {
   margin: 14px 0;
   overflow: hidden;
@@ -267,6 +296,11 @@ select, textarea, input[type=date] { width: 100%; border: 1px solid var(--border
 .removed { opacity: .72; }
 .hidden-by-filter { display: none!important; }
 footer { margin-top: 28px; padding: 18px 0; color: var(--muted); font-size: 11px; line-height: 1.55; border-top: 1px solid var(--border); }
+@media (max-width: 1240px) {
+  .dashboard-workspace { grid-template-columns: 1fr; }
+  .dashboard-secondary { position: static; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .dashboard-secondary .dashboard-column-heading { grid-column: 1 / -1; }
+}
 @media (max-width: 1120px) { .summary-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 700px) {
   .dashboard-header { position: static; margin: 0 0 18px; padding: 0; background: none; backdrop-filter: none; }
@@ -276,6 +310,8 @@ footer { margin-top: 28px; padding: 18px 0; color: var(--muted); font-size: 11px
   .plan-actions { justify-content: flex-start; }
   .task-head { display: block; }
   .badge { display: inline-block; margin-top: 6px; }
+  .dashboard-secondary { grid-template-columns: 1fr; }
+  .dashboard-secondary .dashboard-column-heading { grid-column: auto; }
   .inline-editor, .note-editor, .action-editor, .comment-editor { grid-template-columns: 1fr; }
 }
 @media (max-width: 440px) { .summary-grid { grid-template-columns: 1fr; } }
@@ -1010,13 +1046,16 @@ def _main_content(
     changes: DigestChanges | None,
     period: str,
     github_warning: str | None,
+    meta_html: str = "",
     smart_plan_max_items: int = 5,
     smart_plan_stale_waiting_limit: int = 1,
 ) -> str:
     action, waiting, optional = split_tasks(tasks)
     reviews, authored = github_reviews(tasks), github_authored_prs(tasks)
     issues, mentions = github_assigned_issues(tasks), github_mentions(tasks)
-    parts = [_focus_section(tasks, now.date(), smart_plan_max_items, smart_plan_stale_waiting_limit)]
+    focus = _focus_section(tasks, now.date(), smart_plan_max_items, smart_plan_stale_waiting_limit)
+    primary_parts: list[str] = []
+    secondary_parts: list[str] = []
     if period == "evening" and changes and changes.baseline_available:
         change_parts = [f'<div class="change-summary"><strong>{changes.change_count}</strong> change(s) since the previous digest</div>']
         if changes.new:
@@ -1027,17 +1066,31 @@ def _main_content(
             change_parts.append('<details class="work-section"><summary>📅 Due date changed<span>' + str(len(changes.due_changed)) + '</span></summary><div class="section-content">' + ''.join(_change_card(change, now.date(), "due") for change in changes.due_changed) + '</div></details>')
         if changes.removed:
             change_parts.append('<details class="work-section"><summary>✅ Completed today / no longer active<span>' + str(len(changes.removed)) + '</span></summary><div class="section-content">' + ''.join(_removed_card(item) for item in changes.removed) + '</div></details>')
-        parts.append('<section class="changes"><h2>Evening changes</h2>' + ''.join(change_parts) + '</section>')
-    parts.append(_section("📌 Still needs action" if period == "evening" else "✅ Needs action", action, now.date(), "No tasks currently require your action.", "needs-action", True))
+        primary_parts.append('<section class="changes"><h2>Evening changes</h2>' + ''.join(change_parts) + '</section>')
+    primary_parts.append(_section("📌 Still needs action" if period == "evening" else "✅ Needs action", action, now.date(), "No tasks currently require your action.", "needs-action", True))
+    primary_parts.append(_section("🕒 Waiting on others", waiting, now.date(), "Nothing is currently waiting on others.", "waiting", True))
+
+    if meta_html:
+        secondary_parts.append(meta_html)
     warning = f'<p class="notice">Some GitHub data could not be loaded: {escape(github_warning)}</p>' if github_warning else ""
-    parts.append(warning + _section("🛠️ Your PRs needing action", authored, now.date(), "None of your open PRs currently have requested changes, failing checks, or merge conflicts.", "github-authored"))
-    parts.append(_section("👀 GitHub reviews required", reviews, now.date(), "No reviews currently requested from you.", "github-reviews"))
-    parts.append(_section("📌 GitHub issues assigned to you", issues, now.date(), "No open GitHub issues are currently assigned to you.", "github-issues"))
-    parts.append(_section("💬 GitHub mentions", mentions, now.date(), "No open GitHub issues or PRs currently mention you.", "github-mentions"))
-    parts.append(_section("🕒 Waiting on others", waiting, now.date(), "Nothing is currently waiting on others.", "waiting"))
+    secondary_parts.append(warning + _section("🛠️ Your PRs needing action", authored, now.date(), "None of your open PRs currently have requested changes, failing checks, or merge conflicts.", "github-authored"))
+    secondary_parts.append(_section("👀 GitHub reviews required", reviews, now.date(), "No reviews currently requested from you.", "github-reviews"))
+    secondary_parts.append(_section("📌 GitHub issues assigned to you", issues, now.date(), "No open GitHub issues are currently assigned to you.", "github-issues"))
+    secondary_parts.append(_section("💬 GitHub mentions", mentions, now.date(), "No open GitHub issues or PRs currently mention you.", "github-mentions"))
     optional_content = "".join(_task_card(item, now.date()) for item in sort_tasks(optional)) or '<p class="empty">No optional investigations.</p>'
-    parts.append(f'<details class="optional-section"><summary>🔎 Investigations <span>{len(optional)} optional</span></summary><div class="optional-content">{optional_content}</div></details>')
-    return "".join(parts)
+    secondary_parts.append(f'<details class="optional-section"><summary>🔎 Investigations <span>{len(optional)} optional</span></summary><div class="optional-content">{optional_content}</div></details>')
+
+    primary_label = f"{len(action)} action · {len(waiting)} waiting"
+    secondary_label = f"{len(authored) + len(reviews) + len(issues) + len(mentions)} GitHub item(s)"
+    return (
+        focus
+        + '<div class="dashboard-workspace">'
+        + '<section class="dashboard-primary"><div class="dashboard-column-heading"><h2>Work queue</h2>'
+        + f'<span>{escape(primary_label)}</span></div>{"".join(primary_parts)}</section>'
+        + '<aside class="dashboard-secondary"><div class="dashboard-column-heading"><h2>Attention & context</h2>'
+        + f'<span>{escape(secondary_label)}</span></div>{"".join(secondary_parts)}</aside>'
+        + '</div>'
+    )
 
 
 def render_html(
@@ -1078,16 +1131,17 @@ def render_html(
 </div>'''
     sidebar = f'<aside class="app-sidebar">{brand_html()}{navigation_html(base, active_path="/")}{sidebar_actions}</aside>'
     auto_refresh = f'<script>setTimeout(()=>window.location.reload(),{max(1, refresh_minutes) * 60000});</script>' if dashboard_url else ""
+    meta = _source_status_html(source_statuses) + _summary_panel(summaries)
     main_content = _main_content(
         tasks,
         now,
         changes,
         period,
         github_warning,
+        meta,
         smart_plan_max_items,
         smart_plan_stale_waiting_limit,
     )
-    meta = _source_status_html(source_statuses) + _summary_panel(summaries)
 
     html = f'''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -1095,7 +1149,7 @@ def render_html(
 <style>{DASHBOARD_CSS}</style></head>
 <body><div class="app-shell">{sidebar}<main class="app-main"><div class="app-content"><header class="dashboard-header"><div class="page-header"><div class="page-title-wrap"><span class="eyebrow">Overview</span><h1>Your task digest</h1><p class="page-subtitle">{escape(subtitle)} · {now:%A, %d %B %Y at %H:%M}</p></div><div class="header-status">Auto-refresh every {max(1, refresh_minutes)} min</div></div></header>
 <div class="dashboard-controls"><div class="search-wrap"><input id="task-search" type="search" placeholder="Search tasks, PRs, projects…" aria-label="Search tasks"></div><div class="filter-bar"><button type="button" class="active" data-view="all">All</button><button type="button" data-view="action">Action</button><button type="button" data-view="github">GitHub</button><button type="button" data-view="waiting">Waiting</button><button type="button" data-view="unread">Updates</button></div></div>
-{_summary_cards(tasks, now.date())}{meta}{main_content}
+{_summary_cards(tasks, now.date())}{main_content}
 <div id="toast" role="status" aria-live="polite"></div>
 <footer>{len(action)} need action · {len(authored)} PR blocker(s) · {len(reviews)} review(s) · {len(issues)} assigned issue(s) · {len(mentions)} mention(s) · {len(waiting)} waiting · {len(optional)} investigation(s) · {snoozed} snoozed · {ignored} ignored. Draft tasks are hidden.</footer>
 </div></main></div>

@@ -226,8 +226,8 @@ form { margin: 0; }
   border-radius: 12px;
   background: var(--surface-muted);
 }
-.app-main { min-width: 0; padding: 34px 42px 80px; }
-.app-content { width: min(1180px, 100%); margin: 0 auto; }
+.app-main { min-width: 0; padding: 32px 36px 80px; }
+.app-content { width: min(1480px, 100%); margin: 0 auto; }
 .page-header {
   display: flex;
   justify-content: space-between;

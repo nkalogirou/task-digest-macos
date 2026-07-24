@@ -16,6 +16,11 @@ python scripts/check_public_repo.py
 git status --short
 ```
 
+The checker scans tracked files plus untracked files that are not ignored by
+Git. It therefore allows a local `.env`, logs, generated reports, and runtime
+state when `.gitignore` excludes them, while still failing if Git could publish
+those files.
+
 Confirm that none of these are tracked:
 
 ```bash
@@ -55,9 +60,10 @@ git push -u origin main
 
 ## Release
 
-Create a `v1.0.0` tag after the public repository has passed CI:
+Create a release tag after the public repository has passed CI. For the current release:
 
 ```bash
-git tag -a v1.0.0 -m "Task Digest 1.0.0"
-git push origin v1.0.0
+VERSION=$(cat VERSION)
+git tag -a "v${VERSION}" -m "Task Digest ${VERSION}"
+git push origin "v${VERSION}"
 ```

@@ -200,6 +200,10 @@ python -m pytest -q
 python scripts/check_public_repo.py
 ```
 
+The public-repository checker inspects files that Git could publish. Ignored local
+runtime files such as `.env`, logs, generated reports, and dashboard state may
+remain in a development checkout without failing the check.
+
 Run a local preview without installing the native app:
 
 ```bash

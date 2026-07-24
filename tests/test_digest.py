@@ -360,3 +360,25 @@ def test_html_renders_collapsed_activity_timeline(tmp_path) -> None:
     assert "Please retest this." in rendered
     assert "Added to today’s plan" in rendered
     assert 'class="timeline"' in rendered
+
+
+def test_dashboard_uses_wide_two_column_workspace(tmp_path) -> None:
+    tasks = [
+        _task("1", "Action task", status="In Development"),
+        _task("2", "Waiting task", status="In Review", action_state="waiting"),
+    ]
+    output = tmp_path / "digest.html"
+    render_html(
+        tasks,
+        datetime(2026, 7, 20, 10, 0, tzinfo=timezone.utc),
+        "dashboard",
+        str(output),
+        source_statuses=[],
+    )
+    rendered = output.read_text(encoding="utf-8")
+    assert 'class="dashboard-workspace"' in rendered
+    assert 'class="dashboard-primary"' in rendered
+    assert 'class="dashboard-secondary"' in rendered
+    assert "Work queue" in rendered
+    assert "Attention & context" in rendered
+    assert "width: min(1480px, 100%)" in rendered
