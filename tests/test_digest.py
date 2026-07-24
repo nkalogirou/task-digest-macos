@@ -528,4 +528,20 @@ def test_smart_search_supports_structured_query_fields(tmp_path) -> None:
     assert "field==='pr'" in rendered
     assert "field==='source'" in rendered
     assert "field==='priority'" in rendered
-    assert "sessionStorage.setItem('taskDigest.search'" in rendered
+    assert "uiStorage.set(searchKey,query)" in rendered
+
+
+def test_dashboard_persists_ui_state_across_refreshes(tmp_path) -> None:
+    task = _task("asana:persist", "Persist dashboard state", status="In Review", action_state="waiting")
+    output = tmp_path / "digest.html"
+    render_html([task], datetime(2026, 7, 20, 10, 0, tzinfo=timezone.utc), "morning", str(output))
+    rendered = output.read_text(encoding="utf-8")
+    assert "localStorage.getItem(key)" in rendered
+    assert "taskDigest.ui.view" in rendered
+    assert "taskDigest.ui.search" in rendered
+    assert "taskDigest.ui.details" in rendered
+    assert "taskDigest.ui.scroll:" in rendered
+    assert "persistentDetailsKey" in rendered
+    assert "history.scrollRestoration='manual'" in rendered
+    assert 'id="reset-dashboard-state"' in rendered
+    assert "Reset dashboard view" in rendered

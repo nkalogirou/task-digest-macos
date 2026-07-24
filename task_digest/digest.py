@@ -401,6 +401,8 @@ select, textarea, input[type=date] { width: 100%; border: 1px solid var(--border
 }
 .search-examples button:hover { color: var(--accent); background: var(--accent-soft); transform: none; box-shadow: none; }
 .search-result-count { font-weight: 650; color: var(--text); }
+.reset-view { border: 0; padding: 3px 7px; border-radius: 7px; background: transparent; color: var(--muted); font-size: 10px; font-weight: 650; box-shadow: none; }
+.reset-view:hover { color: var(--accent); background: var(--accent-soft); transform: none; box-shadow: none; }
 .hidden-by-filter { display: none!important; }
 footer { margin-top: 28px; padding: 18px 0; color: var(--muted); font-size: 11px; line-height: 1.55; border-top: 1px solid var(--border); }
 @media (max-width: 1240px) {
@@ -1417,7 +1419,7 @@ def render_html(
 <body><div class="app-shell">{sidebar}<main class="app-main"><div class="app-content"><header class="dashboard-header"><div class="page-header"><div class="page-title-wrap"><span class="eyebrow">Overview</span><h1>Your task digest</h1><p class="page-subtitle">{escape(subtitle)} · {now:%A, %d %B %Y at %H:%M}</p></div><div class="header-status">Auto-refresh every {max(1, refresh_minutes)} min</div></div></header>
 {focus_html}
 <div class="dashboard-controls"><div class="search-wrap"><input id="task-search" type="search" placeholder="Search tasks, PRs, projects…" aria-label="Search tasks"></div><div class="filter-bar"><button type="button" class="active" data-view="all">All</button><button type="button" data-view="action">Action</button><button type="button" data-view="github">GitHub</button><button type="button" data-view="waiting">Waiting</button><button type="button" data-view="unread">Updates</button></div></div>
-<div class="search-helper"><span id="search-result-count" class="search-result-count">Showing all tasks</span><span class="search-examples">Try <button type="button" data-search-example="is:failing">is:failing</button><button type="button" data-search-example="is:waiting">is:waiting</button><button type="button" data-search-example="status:&quot;In Review&quot;">status:In Review</button><button type="button" data-search-example="repo:">repo:</button><button type="button" data-search-example="pr:">pr:</button></span></div>
+<div class="search-helper"><span id="search-result-count" class="search-result-count">Showing all tasks</span><span class="search-examples">Try <button type="button" data-search-example="is:failing">is:failing</button><button type="button" data-search-example="is:waiting">is:waiting</button><button type="button" data-search-example="status:&quot;In Review&quot;">status:In Review</button><button type="button" data-search-example="repo:">repo:</button><button type="button" data-search-example="pr:">pr:</button><button type="button" id="reset-dashboard-state" class="reset-view">Reset view</button></span></div>
 {_summary_cards(tasks, now.date())}{main_content}
 <div id="toast" role="status" aria-live="polite"></div>
 <footer>{len(action)} need action · {len(authored)} PR blocker(s) · {len(reviews)} review(s) · {len(issues)} assigned issue(s) · {len(mentions)} mention(s) · {len(waiting)} waiting · {len(optional)} investigation(s) · {snoozed} snoozed · {ignored} ignored. Draft tasks are hidden.</footer>
@@ -1429,9 +1431,38 @@ const token={token!r};const base={base!r};
 document.querySelectorAll('[data-nav-path]').forEach(link=>{{const path=link.dataset.navPath;const active=path==='/'?location.pathname==='/'||location.pathname.endsWith('task-digest.html'):location.pathname.startsWith(path);link.classList.toggle('active',active);if(active)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}});
 const search=document.getElementById('task-search');
 const resultCount=document.getElementById('search-result-count');
+const resetDashboardState=document.getElementById('reset-dashboard-state');
 const allCards=[...document.querySelectorAll('.task')];
-let view=sessionStorage.getItem('taskDigest.view')||'all';
-search.value=sessionStorage.getItem('taskDigest.search')||'';
+const uiStorage={{
+  get(key){{try{{return localStorage.getItem(key)}}catch(_error){{return null}}}},
+  set(key,value){{try{{localStorage.setItem(key,value)}}catch(_error){{}}}},
+  remove(key){{try{{localStorage.removeItem(key)}}catch(_error){{}}}}
+}};
+const viewKey='taskDigest.ui.view';
+const searchKey='taskDigest.ui.search';
+const detailsKey='taskDigest.ui.details';
+const scrollKey='taskDigest.ui.scroll:'+location.pathname;
+let skipUiStateSave=false;
+let view=uiStorage.get(viewKey)||sessionStorage.getItem('taskDigest.view')||'all';
+search.value=uiStorage.get(searchKey)||sessionStorage.getItem('taskDigest.search')||'';
+uiStorage.set(viewKey,view);uiStorage.set(searchKey,search.value);sessionStorage.removeItem('taskDigest.view');sessionStorage.removeItem('taskDigest.search');
+function readDetailsState(){{try{{return JSON.parse(uiStorage.get(detailsKey)||'{{}}')}}catch(_error){{return {{}}}}}}
+const detailsState=readDetailsState();
+function persistentDetailsKey(details,index){{
+  const taskKey=details.closest('.task')?.dataset.key||'';
+  const sectionId=details.id||details.closest('[id]')?.id||'';
+  const classes=[...details.classList].sort().join('.')||'details';
+  const summary=(details.querySelector(':scope > summary')?.textContent||'').trim().replace(/\\s+/g,' ').slice(0,80);
+  return [location.pathname,taskKey||sectionId||'page',classes,summary||index].join('|');
+}}
+document.querySelectorAll('details').forEach((details,index)=>{{
+  const key=persistentDetailsKey(details,index);details.dataset.uiStateKey=key;
+  if(Object.prototype.hasOwnProperty.call(detailsState,key))details.open=Boolean(detailsState[key]);
+  details.addEventListener('toggle',()=>{{detailsState[key]=details.open;uiStorage.set(detailsKey,JSON.stringify(detailsState));}});
+}});
+if('scrollRestoration' in history)history.scrollRestoration='manual';
+requestAnimationFrame(()=>requestAnimationFrame(()=>{{const y=Number(uiStorage.get(scrollKey));if(Number.isFinite(y)&&y>0)window.scrollTo({{top:y,left:0,behavior:'instant'}});}}));
+window.addEventListener('beforeunload',()=>{{if(!skipUiStateSave)uiStorage.set(scrollKey,String(window.scrollY));}});
 function tokenizeQuery(raw){{return (raw.match(/[^\\s:]+:"[^"]*"|"[^"]*"|\\S+/g)||[]).map(token=>token.replace(/^"|"$/g,''));}}
 function includesValue(card,name,value){{return (card.dataset[name]||'').toLowerCase().includes(value.toLowerCase());}}
 function matchesQuery(card,raw){{
@@ -1455,9 +1486,9 @@ function matchesQuery(card,raw){{
   }});
 }}
 function viewMatches(card){{const flags=new Set((card.dataset.flags||'').split(/\\s+/).filter(Boolean));return view==='all'||view===card.dataset.group||(view==='unread'&&flags.has('unread'));}}
-function setView(next){{view=next;sessionStorage.setItem('taskDigest.view',view);document.querySelectorAll('[data-view]').forEach(button=>button.classList.toggle('active',button.dataset.view===view));applyFilters();}}
+function setView(next){{view=next;uiStorage.set(viewKey,view);document.querySelectorAll('[data-view]').forEach(button=>button.classList.toggle('active',button.dataset.view===view));applyFilters();}}
 function applyFilters(){{
-  const query=search.value.trim();sessionStorage.setItem('taskDigest.search',query);
+  const query=search.value.trim();uiStorage.set(searchKey,query);
   allCards.forEach(card=>card.classList.toggle('hidden-by-filter',!(viewMatches(card)&&matchesQuery(card,query))));
   document.querySelectorAll('.work-section,.optional-section').forEach(section=>{{const cards=[...section.querySelectorAll('.task')];section.classList.toggle('hidden-by-filter',Boolean(cards.length&&cards.every(card=>card.classList.contains('hidden-by-filter'))));}});
   const visibleKeys=new Set(allCards.filter(card=>!card.classList.contains('hidden-by-filter')).map(card=>card.dataset.key));
@@ -1467,6 +1498,7 @@ function applyFilters(){{
 search.addEventListener('input',applyFilters);
 document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>setView(button.dataset.view)));
 document.querySelectorAll('[data-search-example]').forEach(button=>button.addEventListener('click',()=>{{search.value=button.dataset.searchExample||'';search.focus();applyFilters();}}));
+resetDashboardState?.addEventListener('click',()=>{{skipUiStateSave=true;[viewKey,searchKey,detailsKey,scrollKey].forEach(key=>uiStorage.remove(key));sessionStorage.removeItem('taskDigest.view');sessionStorage.removeItem('taskDigest.search');location.reload();}});
 document.addEventListener('keydown',event=>{{if(event.key==='/'&&!event.metaKey&&!event.ctrlKey&&!event.altKey&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)){{event.preventDefault();search.focus();search.select();}}}});
 document.querySelectorAll('.summary-card').forEach(button=>button.addEventListener('click',()=>{{const label=button.dataset.filter||'';if(label.includes('waiting'))setView('waiting');else if(label.includes('review')||label.includes('pr'))setView('github');else if(label.includes('update'))setView('unread');else if(label.includes('action')||label.includes('due'))setView('action');else setView('all');}}));
 document.querySelectorAll('[data-view]').forEach(button=>button.classList.toggle('active',button.dataset.view===view));
@@ -1506,7 +1538,8 @@ if(palette){{
     {{id:'dashboard:action',label:'Show tasks that need action',detail:'Filter the dashboard to actionable work',keywords:'do active',icon:'✓',group:'Filters',run:()=>setView('action')}},
     {{id:'dashboard:waiting',label:'Show work waiting on others',detail:'Filter the dashboard to waiting items',keywords:'blocked pending',icon:'◷',group:'Filters',run:()=>setView('waiting')}},
     {{id:'dashboard:github',label:'Show GitHub work',detail:'Reviews, pull requests, issues and mentions',keywords:'pr review issue mention',icon:'GH',group:'Filters',run:()=>setView('github')}},
-    {{id:'dashboard:updates',label:'Show unread updates',detail:'Tasks with new comments or state changes',keywords:'comments unread new',icon:'•',group:'Filters',run:()=>setView('unread')}}
+    {{id:'dashboard:updates',label:'Show unread updates',detail:'Tasks with new comments or state changes',keywords:'comments unread new',icon:'•',group:'Filters',run:()=>setView('unread')}},
+    {{id:'dashboard:reset-view',label:'Reset dashboard view',detail:'Clear search, filters, expanded panels and saved scroll position',keywords:'clear restore default layout state',icon:'↺',group:'Actions',run:()=>resetDashboardState?.click()}}
   ]);
 }}
 document.querySelectorAll('.asana-write-form').forEach(form=>form.addEventListener('submit',async event=>{{event.preventDefault();const question=form.dataset.confirm;if(question&&!window.confirm(question))return;const button=form.querySelector('button[type=submit]');if(button)button.disabled=true;try{{const body=new URLSearchParams(new FormData(form));const response=await fetch(base+'/api/action',{{method:'POST',headers:{{'Content-Type':'application/x-www-form-urlencoded'}},body}});const payload=await response.json();if(!response.ok)throw new Error(payload.error||'Asana update failed');showToast(String(payload.result||'Asana updated'));setTimeout(()=>window.location.reload(),700);}}catch(error){{showToast(error.message||String(error),true);if(button)button.disabled=false;}}}}));

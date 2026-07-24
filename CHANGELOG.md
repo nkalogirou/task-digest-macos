@@ -4,6 +4,18 @@ All notable changes to Task Digest are documented here.
 
 The project follows semantic versioning for public releases.
 
+## [1.0.10] - 2026-07-24
+
+### Added
+
+- Preserve expanded task details, dashboard panels, and per-page scroll position across automatic refreshes.
+- Add a Reset view control and command-palette action for restoring the default dashboard layout.
+
+### Changed
+
+- Persist dashboard search and work filters across browser and app restarts instead of only for the current tab session.
+- Migrate existing session-only search and filter preferences automatically.
+
 ## [1.0.9] - 2026-07-24
 
 ### Added
