@@ -95,10 +95,17 @@ SERVICES: tuple[ServiceDefinition, ...] = (
 
 def active_services(home: Path | None = None) -> tuple[ServiceDefinition, ...]:
     home = home or Path.home()
-    native_plist = home / "Library" / "LaunchAgents" / NATIVE_APP_SERVICE.plist_name
+    launch_agents = home / "Library" / "LaunchAgents"
+    native_plist = launch_agents / NATIVE_APP_SERVICE.plist_name
+    scheduler_plist = launch_agents / SCHEDULER_SERVICE.plist_name
     if native_plist.exists():
-        return (NATIVE_APP_SERVICE, SCHEDULER_SERVICE)
-    return (*LEGACY_SERVICES, SCHEDULER_SERVICE)
+        # Downloadable app releases schedule digests inside the running menu-bar
+        # process. Source installations may still have the legacy calendar agent.
+        return (NATIVE_APP_SERVICE, SCHEDULER_SERVICE) if scheduler_plist.exists() else (NATIVE_APP_SERVICE,)
+    services: list[ServiceDefinition] = list(LEGACY_SERVICES)
+    if scheduler_plist.exists():
+        services.append(SCHEDULER_SERVICE)
+    return tuple(services)
 
 
 
@@ -241,8 +248,11 @@ def restart_service(key: str, home: Path | None = None, delayed: bool = False) -
 
 def restart_all_services(home: Path | None = None) -> None:
     home = home or Path.home()
-    restart_service("scheduler", home=home)
-    native_plist = home / "Library" / "LaunchAgents" / NATIVE_APP_SERVICE.plist_name
+    launch_agents = home / "Library" / "LaunchAgents"
+    scheduler_plist = launch_agents / SCHEDULER_SERVICE.plist_name
+    if scheduler_plist.exists():
+        restart_service("scheduler", home=home)
+    native_plist = launch_agents / NATIVE_APP_SERVICE.plist_name
     if native_plist.exists():
         # Restart the app after the HTTP response has had time to finish.
         restart_service("app", home=home, delayed=True)

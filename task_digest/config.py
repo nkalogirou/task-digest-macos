@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from dataclasses import dataclass
 from datetime import time
 from typing import List, Optional, Set
@@ -83,7 +84,7 @@ class Config:
 
     @classmethod
     def load(cls) -> "Config":
-        load_dotenv()
+        load_dotenv(dotenv_path=Path.cwd() / ".env", override=False)
         workspace_gid = os.getenv("ASANA_WORKSPACE_GID", "").strip()
         if not workspace_gid:
             raise RuntimeError("Missing required environment variable: ASANA_WORKSPACE_GID")

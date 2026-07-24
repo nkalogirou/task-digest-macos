@@ -50,13 +50,23 @@ def test_active_services_prefers_native_app_when_installed(tmp_path: Path) -> No
     launch_agents = tmp_path / "Library" / "LaunchAgents"
     launch_agents.mkdir(parents=True)
     (launch_agents / "app.taskdigest.macos.plist").write_text("plist", encoding="utf-8")
+    assert [service.key for service in active_services(tmp_path)] == ["app"]
+
+
+def test_active_services_includes_source_scheduler_when_present(tmp_path: Path) -> None:
+    from task_digest.diagnostics import active_services
+
+    launch_agents = tmp_path / "Library" / "LaunchAgents"
+    launch_agents.mkdir(parents=True)
+    (launch_agents / "app.taskdigest.macos.plist").write_text("plist", encoding="utf-8")
+    (launch_agents / "app.taskdigest.scheduler.plist").write_text("plist", encoding="utf-8")
     assert [service.key for service in active_services(tmp_path)] == ["app", "scheduler"]
 
 
 def test_active_services_uses_legacy_services_without_native_app(tmp_path: Path) -> None:
     from task_digest.diagnostics import active_services
 
-    assert [service.key for service in active_services(tmp_path)] == ["dashboard", "menubar", "scheduler"]
+    assert [service.key for service in active_services(tmp_path)] == ["dashboard", "menubar"]
 
 
 def test_github_auth_status_decodes_utf8_output_explicitly(tmp_path: Path, monkeypatch) -> None:

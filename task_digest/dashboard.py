@@ -582,15 +582,18 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     def _schedule_settings_reload(self) -> None:
         script = Path.cwd() / "scripts" / "apply_settings.sh"
-        if not script.is_file():
-            raise RuntimeError(f"Settings reload script is missing: {script}")
-        subprocess.Popen(
-            [str(script)],
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True,
-        )
+        if script.is_file():
+            subprocess.Popen(
+                [str(script)],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+            return
+        # Self-contained release builds keep runtime data in Application Support
+        # and restart through the app LaunchAgent instead of source-tree scripts.
+        restart_service("app", delayed=True)
 
 
     def _standup_page(self, saved: bool = False) -> str:

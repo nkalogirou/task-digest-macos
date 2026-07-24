@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 from typing import Optional
 
+from .bootstrap import ensure_login_agent, onboarding_required, resolve_runtime_dir, run_first_launch_setup
 from .config import Config
 from .dashboard import DashboardServer
 
@@ -88,9 +89,13 @@ def _show_startup_error(message: str) -> None:
 def main() -> int:
     server: DashboardServer | None = None
     try:
-        project_dir = resolve_project_dir()
-        os.chdir(project_dir)
+        runtime_dir, source_mode = resolve_runtime_dir()
+        os.chdir(runtime_dir)
+        if not source_mode and onboarding_required(runtime_dir):
+            run_first_launch_setup(runtime_dir)
         config = Config.load()
+        if not source_mode:
+            ensure_login_agent(runtime_dir)
         server = start_dashboard(config)
         from .menubar import main as run_menubar
 
