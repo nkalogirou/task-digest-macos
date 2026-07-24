@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import sys
+from datetime import datetime
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -8,6 +12,7 @@ import webbrowser
 from pathlib import Path
 from typing import Any
 
+from .bootstrap import is_bundled
 from .config import Config
 from .runtime import get_or_create_action_token
 
@@ -80,7 +85,14 @@ def main() -> int:
             ]
             self.timer = rumps.Timer(self.refresh, max(60, config.menu_refresh_minutes * 60))
             self.timer.start()
+            self.scheduler_timer = None
+            self._last_scheduler_minute = ""
+            if is_bundled():
+                self.scheduler_timer = rumps.Timer(self.run_scheduler, 60)
+                self.scheduler_timer.start()
             self.refresh(None)
+            if is_bundled():
+                self.run_scheduler(None)
 
         def _replace_submenu(self, menu: Any, rows: list[Any]) -> None:
             try:
@@ -124,6 +136,26 @@ def main() -> int:
             except Exception:
                 pass
             self.refresh(None)
+
+        def run_scheduler(self, _sender: Any) -> None:
+            marker = datetime.now().astimezone().strftime("%Y-%m-%dT%H:%M")
+            if marker == self._last_scheduler_minute:
+                return
+            self._last_scheduler_minute = marker
+            env = dict(os.environ)
+            env["TASK_DIGEST_DATA_DIR"] = str(Path.cwd())
+            try:
+                subprocess.Popen(
+                    [sys.executable, "--run-digest"],
+                    cwd=str(Path.cwd()),
+                    env=env,
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    start_new_session=True,
+                )
+            except OSError:
+                pass
 
         def pause_notifications(self, _sender: Any) -> None:
             try:

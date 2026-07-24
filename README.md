@@ -58,11 +58,13 @@ Local state ──────────────────────�
 
 ## Requirements
 
+For the downloadable app:
+
 - macOS 13 or later
-- Python 3.11 or 3.12
 - An Asana account and personal access token
-- GitHub CLI (`gh`) if GitHub integration is enabled
-- Access to the Asana workspace and GitHub repositories you configure
+- GitHub CLI (`gh`) only if GitHub integration is enabled
+
+For source development, Python 3.11 or 3.12 is also required.
 
 Task Digest is currently designed for **one person running it locally on one Mac**. Asana recommends OAuth for distributed multi-user applications; this project uses a personal access token because it is a personal local tool.
 
@@ -95,7 +97,22 @@ python -m task_digest --demo --open-report
 
 Demo mode stores any temporary focus, note, or snooze changes in separate `state/demo_*` files. It never reads your Asana token or GitHub CLI credentials.
 
-## Quick start
+## Install the downloadable app
+
+1. Open the repository's **Releases** page.
+2. Download `Task-Digest-<version>.dmg`.
+3. Drag **Task Digest** to Applications and open it.
+4. Paste an Asana personal access token when prompted and choose your workspace.
+5. Optionally install and authenticate GitHub CLI, then enable GitHub sources in Settings.
+
+The release app contains its own Python runtime. It stores configuration and local
+state in `~/Library/Application Support/Task Digest`, installs a login LaunchAgent,
+and schedules morning/evening digests inside the running menu-bar app.
+
+Official public downloads should be Developer ID signed and notarized. See
+[Building signed macOS releases](docs/MACOS_RELEASE.md).
+
+## Build from source
 
 ### 1. Clone the repository
 
@@ -133,7 +150,7 @@ The setup wizard will:
 5. authenticate GitHub CLI and ask which repositories to monitor;
 6. run the tests;
 7. build `~/Applications/Task Digest.app`;
-8. install the login and weekday schedule agents.
+8. install the native app and source-development schedule agent.
 
 When it finishes, open:
 
@@ -292,7 +309,7 @@ logs/               local logs (ignored, except .gitkeep)
 - GitHub data is limited to the configured repositories and permissions of the active `gh` account.
 - Asana history and comments are limited to what the token can access.
 - “Unread” is local Task Digest state, not Asana’s inbox read state.
-- The native app is built and ad-hoc signed locally; it is not notarized for distribution.
+- Release trust depends on the maintainer configuring Developer ID signing and Apple notarization; unsigned workflow artifacts are intended only for testing.
 
 ## Uninstall
 

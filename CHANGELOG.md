@@ -4,6 +4,16 @@ All notable changes to Task Digest are documented here.
 
 The project follows semantic versioning for public releases.
 
+## [1.0.13] - 2026-07-24
+
+### Added
+
+- Self-contained first-launch setup for downloadable macOS app releases.
+- Application Support runtime storage and automatic login LaunchAgent creation.
+- In-app weekday scheduler, removing the Python/source checkout requirement for release users.
+- Developer ID signing, notarization, DMG/ZIP packaging, checksums, and GitHub release workflow.
+- macOS release documentation and signing-secret guidance.
+
 ## [1.0.12] - 2026-07-24
 
 ### Added

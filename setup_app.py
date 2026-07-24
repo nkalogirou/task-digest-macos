@@ -21,6 +21,7 @@ OPTIONS = {
         "h11",
     ],
     "includes": ["AppKit", "Foundation", "objc"],
+    "resources": [str(ROOT / "task_digest" / "defaults.env")],
     "plist": {
         "CFBundleName": "Task Digest",
         "CFBundleDisplayName": "Task Digest",
@@ -40,5 +41,6 @@ setup(
     license="MIT",
     python_requires=">=3.11,<3.13",
     app=["Task Digest.py"],
+    package_data={"task_digest": ["defaults.env"]},
     options={"py2app": OPTIONS},
 )

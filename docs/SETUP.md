@@ -17,7 +17,9 @@ python -m task_digest --demo --open-report
 
 # Local setup guide
 
-This guide explains every step required to run Task Digest on a Mac. The guided `scripts/setup_local.sh` script performs the same steps interactively.
+This guide is for contributors and people who want to build from source. Normal users can download the self-contained DMG from GitHub Releases, drag Task Digest to Applications, and complete the first-launch Asana setup without installing Python.
+
+The guided `scripts/setup_local.sh` script performs the source setup steps interactively.
 
 ## 1. Prerequisites
 

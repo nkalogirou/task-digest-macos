@@ -105,8 +105,8 @@ def resolve_asana_token(service: str, account: str) -> str:
     if value:
         return value
     raise RuntimeError(
-        "No Asana token was found. Run scripts/migrate_asana_token_to_keychain.sh "
-        "or temporarily set ASANA_TOKEN in .env."
+        "No Asana token was found in macOS Keychain. Reopen Task Digest to run first-launch setup, "
+        "or store a token with: python -m task_digest.keychain store-asana"
     )
 
 

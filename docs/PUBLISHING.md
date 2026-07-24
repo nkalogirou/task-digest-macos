@@ -60,6 +60,8 @@ git push -u origin main
 
 ## Release
 
+Configure Developer ID signing and notarization before promoting downloadable app artifacts. See [`docs/MACOS_RELEASE.md`](MACOS_RELEASE.md). The release workflow builds a self-contained DMG and ZIP; users do not need Python or a source checkout.
+
 Create a release tag after the public repository has passed CI. For the current release:
 
 ```bash
