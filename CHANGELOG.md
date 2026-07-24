@@ -4,13 +4,27 @@ All notable changes to Task Digest are documented here.
 
 The project follows semantic versioning for public releases.
 
-## [1.0.7] - 2026-07-24
+## [1.0.9] - 2026-07-24
+
+### Added
+
+- Add a global Command-K command palette for navigation and common dashboard actions.
+- Search dashboard tasks and pull requests directly from the command palette.
+- Add structured dashboard search filters for status, project, repository, PR number, source, priority, and states such as failing, waiting, overdue, focused, and unread.
+- Add command-palette flows for private notes, snoozing, refresh, Today’s Plan, and common work filters.
 
 ### Changed
 
-- Promote Today’s Plan to the first dashboard section beneath the page header.
-- Reduce the always-visible summary row to Need action, Reviews, Waiting, and New updates.
-- Move due dates, PR blockers, investigations, and plan size into a compact collapsed More metrics panel.
+- Persist the current dashboard search and view filter for the browser session.
+- Show a unique-result count and clickable smart-search examples beneath the dashboard search bar.
+
+## [1.0.8] - 2026-07-24
+
+### Changed
+
+- Group sidebar destinations into Work, Organize, Review, and System sections.
+- Rename the final navigation item to System status for clearer intent.
+- Preserve the compact icon-only navigation layout on smaller windows.
 
 ## [1.0.6] - 2026-07-24
 

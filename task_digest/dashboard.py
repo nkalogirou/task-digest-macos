@@ -45,7 +45,7 @@ from .settings import BOOLEAN_KEYS, EDITABLE_KEYS, read_settings, save_settings
 from .standup import build_standup, render_standup_page, save_standup
 from .state import DigestState
 from .workspace import WorkspaceState
-from .ui import SIMPLE_PAGE_CSS, brand_html, navigation_html
+from .ui import SIMPLE_PAGE_CSS, brand_html, command_palette_html, command_palette_script, navigation_html
 
 
 class DashboardServer(ThreadingHTTPServer):
@@ -997,7 +997,9 @@ document.querySelectorAll('[data-confirm]').forEach(form=>form.addEventListener(
 <header class="page-header"><div class="page-title-wrap"><span class="eyebrow">Task Digest</span><h1>{html.escape(title)}</h1><p class="page-subtitle">{html.escape(subtitle)}</p></div></header>
 {content}
 </div></main></div>
+{command_palette_html()}
 <script>document.querySelectorAll('[data-nav-path]').forEach(link=>{{const path=link.dataset.navPath;const active=path==='/'?location.pathname==='/':location.pathname.startsWith(path);link.classList.toggle('active',active);if(active)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}});</script>
+{command_palette_script()}
 </body></html>'''
 
     def _error_page(self, exc: Exception) -> str:

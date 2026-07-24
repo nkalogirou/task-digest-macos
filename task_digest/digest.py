@@ -11,7 +11,7 @@ from .models import SourceStatus, TaskEvent, TaskItem
 from .plan import PlanCandidate, build_smart_plan
 from .priority import PRIORITY_RANK, working_days_between, working_days_until
 from .relationships import relationship_tree_html
-from .ui import SHARED_CSS, brand_html, navigation_html
+from .ui import SHARED_CSS, brand_html, command_palette_html, command_palette_script, navigation_html
 
 PRIORITY_ORDER = PRIORITY_RANK
 PRIORITY_LABELS = {
@@ -378,6 +378,29 @@ select, textarea, input[type=date] { width: 100%; border: 1px solid var(--border
 .notice { border-left: 4px solid var(--warning); background: var(--warning-soft); color: var(--warning); }
 .changes { margin: 23px 0; }
 .removed { opacity: .72; }
+.search-helper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 14px;
+  margin: -8px 2px 18px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.search-examples { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.search-examples button {
+  border: 0;
+  padding: 3px 7px;
+  border-radius: 7px;
+  background: var(--surface-muted);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 650;
+  box-shadow: none;
+}
+.search-examples button:hover { color: var(--accent); background: var(--accent-soft); transform: none; box-shadow: none; }
+.search-result-count { font-weight: 650; color: var(--text); }
 .hidden-by-filter { display: none!important; }
 footer { margin-top: 28px; padding: 18px 0; color: var(--muted); font-size: 11px; line-height: 1.55; border-top: 1px solid var(--border); }
 @media (max-width: 1240px) {
@@ -1002,6 +1025,63 @@ def _task_secondary_html(item: TaskItem) -> str:
     return f'<details class="task-details"><summary>Details &amp; actions <span>Expand</span></summary><div class="task-details-body">{content}</div></details>'
 
 
+
+def _task_search_attributes(item: TaskItem, today: date) -> str:
+    repositories = sorted({f"{link.owner}/{link.repo}" for link in item.github_links})
+    pr_numbers = sorted({str(link.number) for link in item.github_links if link.kind == "pull"})
+    github_text: list[str] = []
+    flags = {item.source, item.action_state, item.priority}
+    if item.unread_updates:
+        flags.add("unread")
+    if item.is_focused:
+        flags.add("focused")
+    if item.due_on and item.due_on < today:
+        flags.add("overdue")
+    if item.stale_waiting:
+        flags.add("stale")
+    if any(not dependency.completed for dependency in item.dependencies):
+        flags.add("blocked")
+    if item.github_kind == "review_request":
+        flags.add("review")
+    for link in item.github_links:
+        github_text.extend([
+            link.title or "",
+            *link.action_reasons,
+            *link.failed_checks,
+            *link.pending_reviewers,
+        ])
+        reasons = " ".join(link.action_reasons).casefold()
+        if link.failed_checks or "check" in reasons or "failing" in reasons:
+            flags.add("failing")
+        if "changes requested" in reasons:
+            flags.add("changes-requested")
+        if "conflict" in reasons:
+            flags.add("conflict")
+    searchable = " ".join(
+        value for value in [
+            item.title,
+            item.status or "",
+            item.section or "",
+            item.project or "",
+            item.local_note,
+            *item.notes,
+            *repositories,
+            *pr_numbers,
+            *github_text,
+        ] if value
+    ).casefold()
+    values = {
+        "data-priority": item.priority,
+        "data-status": (item.status or item.section or "").casefold(),
+        "data-project": (item.project or "").casefold(),
+        "data-repository": " ".join(repositories).casefold(),
+        "data-pr": " ".join(pr_numbers),
+        "data-source": item.source,
+        "data-flags": " ".join(sorted(flags)),
+        "data-search": searchable,
+    }
+    return " ".join(f'{name}="{escape(value, quote=True)}"' for name, value in values.items())
+
 def _task_card(item: TaskItem, today: date, badge: str | None = None, compact: bool = False) -> str:
     title = escape(item.title)
     if item.url:
@@ -1045,9 +1125,10 @@ def _task_card(item: TaskItem, today: date, badge: str | None = None, compact: b
     draggable = ' draggable="true"' if compact else ""
     group = "github" if item.source == "github" else ("waiting" if item.action_state == "waiting" else "action")
 
+    search_attributes = _task_search_attributes(item, today)
     return (
         f'<article class="task priority-{item.priority}{focused}{compact_class}" data-key="{escape(item.key, quote=True)}" '
-        f'data-group="{group}" data-title="{escape(item.title.casefold(), quote=True)}"{draggable}>'
+        f'data-group="{group}" data-title="{escape(item.title.casefold(), quote=True)}" {search_attributes}{draggable}>'
         '<div class="task-head">'
         f'<div class="task-title-wrap"><h3>{title}</h3><div class="task-flags">{flags}</div></div>'
         f'<span class="priority-pill tone-{item.priority}">{escape(priority_label)}</span></div>'
@@ -1336,19 +1417,98 @@ def render_html(
 <body><div class="app-shell">{sidebar}<main class="app-main"><div class="app-content"><header class="dashboard-header"><div class="page-header"><div class="page-title-wrap"><span class="eyebrow">Overview</span><h1>Your task digest</h1><p class="page-subtitle">{escape(subtitle)} · {now:%A, %d %B %Y at %H:%M}</p></div><div class="header-status">Auto-refresh every {max(1, refresh_minutes)} min</div></div></header>
 {focus_html}
 <div class="dashboard-controls"><div class="search-wrap"><input id="task-search" type="search" placeholder="Search tasks, PRs, projects…" aria-label="Search tasks"></div><div class="filter-bar"><button type="button" class="active" data-view="all">All</button><button type="button" data-view="action">Action</button><button type="button" data-view="github">GitHub</button><button type="button" data-view="waiting">Waiting</button><button type="button" data-view="unread">Updates</button></div></div>
+<div class="search-helper"><span id="search-result-count" class="search-result-count">Showing all tasks</span><span class="search-examples">Try <button type="button" data-search-example="is:failing">is:failing</button><button type="button" data-search-example="is:waiting">is:waiting</button><button type="button" data-search-example="status:&quot;In Review&quot;">status:In Review</button><button type="button" data-search-example="repo:">repo:</button><button type="button" data-search-example="pr:">pr:</button></span></div>
 {_summary_cards(tasks, now.date())}{main_content}
 <div id="toast" role="status" aria-live="polite"></div>
 <footer>{len(action)} need action · {len(authored)} PR blocker(s) · {len(reviews)} review(s) · {len(issues)} assigned issue(s) · {len(mentions)} mention(s) · {len(waiting)} waiting · {len(optional)} investigation(s) · {snoozed} snoozed · {ignored} ignored. Draft tasks are hidden.</footer>
 </div></main></div>
+{command_palette_html()}
+{command_palette_script((dashboard_url or "").rstrip("/"))}
 <script>
 const token={token!r};const base={base!r};
 document.querySelectorAll('[data-nav-path]').forEach(link=>{{const path=link.dataset.navPath;const active=path==='/'?location.pathname==='/'||location.pathname.endsWith('task-digest.html'):location.pathname.startsWith(path);link.classList.toggle('active',active);if(active)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');}});
-const search=document.getElementById('task-search');let view='all';
-function applyFilters(){{const q=(search.value||'').toLowerCase();document.querySelectorAll('.task').forEach(card=>{{const text=(card.dataset.title||'')+' '+card.textContent.toLowerCase();const group=card.dataset.group||'';const unread=card.textContent.includes('new update');const okView=view==='all'||view===group||(view==='unread'&&unread);card.classList.toggle('hidden-by-filter',!(okView&&text.includes(q)));}})}}
-search.addEventListener('input',applyFilters);document.querySelectorAll('[data-view]').forEach(btn=>btn.addEventListener('click',()=>{{view=btn.dataset.view;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b===btn));applyFilters();}}));
-document.querySelectorAll('.summary-card').forEach(btn=>btn.addEventListener('click',()=>{{const label=btn.dataset.filter||'';if(label.includes('waiting'))view='waiting';else if(label.includes('review')||label.includes('pr'))view='github';else if(label.includes('update'))view='unread';else if(label.includes('action')||label.includes('due'))view='action';else view='all';document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));applyFilters();}}));
+const search=document.getElementById('task-search');
+const resultCount=document.getElementById('search-result-count');
+const allCards=[...document.querySelectorAll('.task')];
+let view=sessionStorage.getItem('taskDigest.view')||'all';
+search.value=sessionStorage.getItem('taskDigest.search')||'';
+function tokenizeQuery(raw){{return (raw.match(/[^\\s:]+:"[^"]*"|"[^"]*"|\\S+/g)||[]).map(token=>token.replace(/^"|"$/g,''));}}
+function includesValue(card,name,value){{return (card.dataset[name]||'').toLowerCase().includes(value.toLowerCase());}}
+function matchesQuery(card,raw){{
+  const tokens=tokenizeQuery(raw);
+  const flags=new Set((card.dataset.flags||'').split(/\\s+/).filter(Boolean));
+  const searchText=((card.dataset.search||'')+' '+card.textContent).toLowerCase();
+  return tokens.every(token=>{{
+    const separator=token.indexOf(':');
+    if(separator>0){{
+      const field=token.slice(0,separator).toLowerCase();
+      const value=token.slice(separator+1).replace(/^"|"$/g,'').toLowerCase();
+      if(field==='is')return !value||flags.has(value)||(value==='github'&&card.dataset.group==='github')||(value==='action'&&card.dataset.group==='action')||(value==='waiting'&&card.dataset.group==='waiting');
+      if(field==='repo')return includesValue(card,'repository',value);
+      if(field==='project')return includesValue(card,'project',value);
+      if(field==='status')return includesValue(card,'status',value);
+      if(field==='pr')return includesValue(card,'pr',value.replace(/^#/,''));
+      if(field==='source')return includesValue(card,'source',value);
+      if(field==='priority')return includesValue(card,'priority',value);
+    }}
+    return searchText.includes(token.toLowerCase());
+  }});
+}}
+function viewMatches(card){{const flags=new Set((card.dataset.flags||'').split(/\\s+/).filter(Boolean));return view==='all'||view===card.dataset.group||(view==='unread'&&flags.has('unread'));}}
+function setView(next){{view=next;sessionStorage.setItem('taskDigest.view',view);document.querySelectorAll('[data-view]').forEach(button=>button.classList.toggle('active',button.dataset.view===view));applyFilters();}}
+function applyFilters(){{
+  const query=search.value.trim();sessionStorage.setItem('taskDigest.search',query);
+  allCards.forEach(card=>card.classList.toggle('hidden-by-filter',!(viewMatches(card)&&matchesQuery(card,query))));
+  document.querySelectorAll('.work-section,.optional-section').forEach(section=>{{const cards=[...section.querySelectorAll('.task')];section.classList.toggle('hidden-by-filter',Boolean(cards.length&&cards.every(card=>card.classList.contains('hidden-by-filter'))));}});
+  const visibleKeys=new Set(allCards.filter(card=>!card.classList.contains('hidden-by-filter')).map(card=>card.dataset.key));
+  const totalKeys=new Set(allCards.map(card=>card.dataset.key));
+  resultCount.textContent=query||view!=='all'?`${{visibleKeys.size}} of ${{totalKeys.size}} task${{totalKeys.size===1?'':'s'}} shown`:`Showing all ${{totalKeys.size}} task${{totalKeys.size===1?'':'s'}}`;
+}}
+search.addEventListener('input',applyFilters);
+document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>setView(button.dataset.view)));
+document.querySelectorAll('[data-search-example]').forEach(button=>button.addEventListener('click',()=>{{search.value=button.dataset.searchExample||'';search.focus();applyFilters();}}));
+document.addEventListener('keydown',event=>{{if(event.key==='/'&&!event.metaKey&&!event.ctrlKey&&!event.altKey&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)){{event.preventDefault();search.focus();search.select();}}}});
+document.querySelectorAll('.summary-card').forEach(button=>button.addEventListener('click',()=>{{const label=button.dataset.filter||'';if(label.includes('waiting'))setView('waiting');else if(label.includes('review')||label.includes('pr'))setView('github');else if(label.includes('update'))setView('unread');else if(label.includes('action')||label.includes('due'))setView('action');else setView('all');}}));
+document.querySelectorAll('[data-view]').forEach(button=>button.classList.toggle('active',button.dataset.view===view));
+applyFilters();
 const list=document.getElementById('focus-list');if(list){{let dragged=null;list.querySelectorAll('.task').forEach(card=>{{card.addEventListener('dragstart',()=>{{dragged=card;card.classList.add('dragging')}});card.addEventListener('dragend',async()=>{{card.classList.remove('dragging');const keys=[...list.querySelectorAll('.task')].map(x=>x.dataset.key);const body=new URLSearchParams({{token,action:'focus_order',keys:keys.join(',')}});await fetch(base+'/api/action',{{method:'POST',headers:{{'Content-Type':'application/x-www-form-urlencoded'}},body}});}});}});list.addEventListener('dragover',event=>{{event.preventDefault();const after=[...list.querySelectorAll('.task:not(.dragging)')].find(el=>event.clientY<=el.getBoundingClientRect().top+el.offsetHeight/2);if(dragged){{if(after)list.insertBefore(dragged,after);else list.appendChild(dragged);}}}});}}
 const toast=document.getElementById('toast');function showToast(message,error=false){{if(!toast)return;toast.textContent=message;toast.style.background=error?'var(--danger)':'var(--text)';toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),4000);}}
+function revealCard(key,target='card'){{
+  const cards=allCards.filter(card=>card.dataset.key===key);const card=cards.find(item=>!item.classList.contains('compact'))||cards[0];if(!card)return;
+  search.value='';setView('all');
+  let parent=card.parentElement;while(parent){{if(parent.tagName==='DETAILS')parent.open=true;parent=parent.parentElement;}}
+  if(target==='note'){{card.querySelector('.task-details')?.setAttribute('open','');card.querySelector('.task-controls')?.setAttribute('open','');}}
+  card.scrollIntoView({{behavior:'smooth',block:'center'}});card.classList.remove('palette-target');requestAnimationFrame(()=>card.classList.add('palette-target'));
+  if(target==='note')setTimeout(()=>card.querySelector('textarea[name="note"]')?.focus(),450);
+}}
+async function postDashboardAction(action,key=''){{
+  const body=new URLSearchParams({{token,action,key}});const response=await fetch(base+'/api/action',{{method:'POST',headers:{{'Content-Type':'application/x-www-form-urlencoded'}},body}});const payload=await response.json();if(!response.ok)throw new Error(payload.error||'Action failed');showToast(String(payload.result||'Task Digest updated'));return payload;
+}}
+const palette=window.TaskDigestCommandPalette;
+if(palette){{
+  const uniqueCards=[...new Map(allCards.filter(card=>!card.classList.contains('compact')).map(card=>[card.dataset.key,card])).values()];
+  const taskItems=uniqueCards.map(card=>({{id:'task:'+card.dataset.key,label:card.querySelector('h3')?.textContent.trim()||card.dataset.title,detail:[card.dataset.status,card.dataset.project,card.dataset.repository].filter(Boolean).join(' · '),keywords:(card.dataset.search||'')+' '+card.dataset.flags,icon:card.dataset.source==='github'?'GH':'A',group:'Tasks',run:()=>revealCard(card.dataset.key)}}));
+  palette.replaceGroup('Tasks',taskItems);
+  const pickerItems=handler=>uniqueCards.map(card=>({{id:'picker:'+card.dataset.key,label:card.querySelector('h3')?.textContent.trim()||card.dataset.title,detail:[card.dataset.status,card.dataset.project,card.dataset.repository].filter(Boolean).join(' · '),keywords:card.dataset.search||'',icon:card.dataset.source==='github'?'GH':'A',keepOpen:true,run:()=>handler(card)}}));
+  const chooseNoteTask=()=>palette.setMode('note-task',pickerItems(card=>{{palette.close();revealCard(card.dataset.key,'note');}}),'Choose a task for a private note…');
+  const chooseSnoozeTask=()=>palette.setMode('snooze-task',pickerItems(card=>{{const key=card.dataset.key;const title=card.querySelector('h3')?.textContent.trim()||card.dataset.title;palette.setMode('snooze-choice',[
+    {{id:'snooze:1',label:'Until tomorrow',detail:title,icon:'1d',run:async()=>{{try{{await postDashboardAction('snooze_1',key);palette.close();setTimeout(()=>location.reload(),500);}}catch(error){{showToast(error.message,true);}}}}}},
+    {{id:'snooze:3',label:'For 3 working days',detail:title,icon:'3d',run:async()=>{{try{{await postDashboardAction('snooze_3',key);palette.close();setTimeout(()=>location.reload(),500);}}catch(error){{showToast(error.message,true);}}}}}},
+    {{id:'snooze:change',label:'Until the task changes',detail:title,icon:'↻',run:async()=>{{try{{await postDashboardAction('until_change',key);palette.close();setTimeout(()=>location.reload(),500);}}catch(error){{showToast(error.message,true);}}}}}}
+  ],`Snooze ${{title}}…`); }}),'Choose a task to snooze…');
+  palette.register([
+    {{id:'dashboard:search',label:'Search tasks and pull requests',detail:'Use text or filters such as is:failing, status: and repo:',keywords:'find filter query',icon:'⌕',group:'Suggested',run:()=>{{search.focus();search.select();}}}},
+    {{id:'dashboard:plan',label:"Open Today’s Plan",detail:'Jump to the ordered focus list',keywords:'focus smart plan today',icon:'◎',group:'Suggested',run:()=>document.getElementById('todays-plan')?.scrollIntoView({{behavior:'smooth',block:'start'}})}},
+    {{id:'dashboard:failing',label:'Show pull requests with failing checks',detail:'Applies the is:failing smart filter',keywords:'ci tests checks broken github',icon:'!',group:'Suggested',run:()=>{{search.value='is:failing';setView('all');search.focus();}}}},
+    {{id:'dashboard:note',label:'Add a private note to a task…',detail:'Choose a task, then jump to its local note editor',keywords:'annotate context memo',icon:'✎',group:'Actions',keepOpen:true,run:chooseNoteTask}},
+    {{id:'dashboard:snooze',label:'Snooze a task…',detail:'Hide until tomorrow, for three workdays, or until it changes',keywords:'later defer hide',icon:'◷',group:'Actions',keepOpen:true,run:chooseSnoozeTask}},
+    {{id:'dashboard:refresh',label:'Refresh task data',detail:'Reload Asana and GitHub now',keywords:'sync reload update',icon:'↻',group:'Actions',run:async()=>{{try{{await postDashboardAction('refresh');setTimeout(()=>location.reload(),400);}}catch(error){{showToast(error.message,true);}}}}}},
+    {{id:'dashboard:action',label:'Show tasks that need action',detail:'Filter the dashboard to actionable work',keywords:'do active',icon:'✓',group:'Filters',run:()=>setView('action')}},
+    {{id:'dashboard:waiting',label:'Show work waiting on others',detail:'Filter the dashboard to waiting items',keywords:'blocked pending',icon:'◷',group:'Filters',run:()=>setView('waiting')}},
+    {{id:'dashboard:github',label:'Show GitHub work',detail:'Reviews, pull requests, issues and mentions',keywords:'pr review issue mention',icon:'GH',group:'Filters',run:()=>setView('github')}},
+    {{id:'dashboard:updates',label:'Show unread updates',detail:'Tasks with new comments or state changes',keywords:'comments unread new',icon:'•',group:'Filters',run:()=>setView('unread')}}
+  ]);
+}}
 document.querySelectorAll('.asana-write-form').forEach(form=>form.addEventListener('submit',async event=>{{event.preventDefault();const question=form.dataset.confirm;if(question&&!window.confirm(question))return;const button=form.querySelector('button[type=submit]');if(button)button.disabled=true;try{{const body=new URLSearchParams(new FormData(form));const response=await fetch(base+'/api/action',{{method:'POST',headers:{{'Content-Type':'application/x-www-form-urlencoded'}},body}});const payload=await response.json();if(!response.ok)throw new Error(payload.error||'Asana update failed');showToast(String(payload.result||'Asana updated'));setTimeout(()=>window.location.reload(),700);}}catch(error){{showToast(error.message||String(error),true);if(button)button.disabled=false;}}}}));
 </script>{auto_refresh}</body></html>'''
     path = Path(output_path).expanduser().resolve()

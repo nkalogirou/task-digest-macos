@@ -37,6 +37,7 @@ The dashboard binds to `127.0.0.1`, the Asana token is stored in macOS Keychain,
 |---|---|
 | **Smart prioritization** | Uses due dates, working-day age, GitHub blockers, dependencies, and visual rules. |
 | **Today’s Plan** | Suggests a compact daily plan that you can accept, edit, and drag into order. |
+| **Command palette** | Press `⌘K` to navigate, search tasks and PRs, refresh, add notes, snooze work, or apply common filters. |
 | **Action vs waiting** | Separates work you can act on from work waiting for reviewers, CI, deployment, or dependencies. |
 | **GitHub awareness** | Tracks requested reviews, assigned issues, mentions, authored PR blockers, and linked PR status. |
 | **Asana context** | Reads sections, custom status, comments, dependencies, dependents, due dates, and task history. |
@@ -145,11 +146,30 @@ Once installed, Terminal is normally unnecessary.
 
 - Click the menu-bar item for a quick overview.
 - Open the dashboard to accept or reorder Today’s Plan.
+- Press **⌘K** anywhere to open the command palette; press **/** on the dashboard to focus search.
 - Expand task cards for comments, dependencies, activity, local notes, and controls.
 - Use **Snooze**, **Until change**, or **Ignore** to reduce noise.
 - Use **Mark updates read** for Task Digest’s local unread tracking.
 - Generate your stand-up from current and recent work.
 - Use the 10:00 full digest and 17:30 change digest as daily checkpoints.
+
+### Smart search
+
+Dashboard search supports ordinary text plus structured filters:
+
+```text
+is:failing
+is:waiting
+is:unread
+status:"In Review"
+project:"Release Sprint"
+repo:acme-inc/web-app
+pr:142
+source:github
+priority:urgent
+```
+
+Filters can be combined, for example `repo:acme-inc/web-app is:failing`.
 
 ## Safety and privacy
 

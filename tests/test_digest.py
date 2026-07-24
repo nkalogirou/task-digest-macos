@@ -477,3 +477,55 @@ def test_dashboard_uses_four_primary_metrics_and_collapsed_secondary_metrics(tmp
     assert "PR blockers" in rendered
     assert "Investigations" in rendered
     assert "Plan items" in rendered
+
+
+def test_dashboard_renders_command_palette_and_smart_search(tmp_path) -> None:
+    from task_digest.models import GitHubLink
+
+    task = _task("asana:search", "Fix checkout coverage", status="In Review", action_state="waiting")
+    task.project = "Web Sprint"
+    task.unread_updates = 2
+    task.github_links = [
+        GitHubLink(
+            owner="acme-inc",
+            repo="web-app",
+            number=142,
+            url="https://github.com/acme-inc/web-app/pull/142",
+            action_reasons=["Checks failing"],
+            failed_checks=["e2e"],
+        )
+    ]
+    output = tmp_path / "digest.html"
+    render_html(
+        [task],
+        datetime(2026, 7, 20, 10, 0, tzinfo=timezone.utc),
+        "morning",
+        str(output),
+        action_token="secret",
+        dashboard_url="http://127.0.0.1:8765",
+    )
+    rendered = output.read_text(encoding="utf-8")
+    assert "Search commands, tasks and pull requests" in rendered
+    assert "Show pull requests with failing checks" in rendered
+    assert "Add a private note to a task" in rendered
+    assert "Snooze a task" in rendered
+    assert 'data-repository="acme-inc/web-app"' in rendered
+    assert 'data-pr="142"' in rendered
+    assert 'data-flags="' in rendered and "failing" in rendered
+    assert "is:failing" in rendered
+    assert "status:In Review" in rendered
+
+
+def test_smart_search_supports_structured_query_fields(tmp_path) -> None:
+    task = _task("asana:query", "Review course access", status="In Review", action_state="waiting")
+    task.project = "Release Sprint"
+    output = tmp_path / "digest.html"
+    render_html([task], datetime(2026, 7, 20, 10, 0, tzinfo=timezone.utc), "morning", str(output))
+    rendered = output.read_text(encoding="utf-8")
+    assert "field==='repo'" in rendered
+    assert "field==='project'" in rendered
+    assert "field==='status'" in rendered
+    assert "field==='pr'" in rendered
+    assert "field==='source'" in rendered
+    assert "field==='priority'" in rendered
+    assert "sessionStorage.setItem('taskDigest.search'" in rendered

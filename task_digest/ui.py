@@ -3,17 +3,27 @@ from __future__ import annotations
 from html import escape
 
 
-NAV_ITEMS = (
-    ("/", "Overview", "overview"),
-    ("/standup", "Stand-up", "standup"),
-    ("/history", "History", "history"),
-    ("/backups", "Backups", "backups"),
-    ("/hidden", "Hidden", "hidden"),
-    ("/rules", "Rules", "rules"),
-    ("/relationships", "Relationships", "relationships"),
-    ("/settings", "Settings", "settings"),
-    ("/system", "System", "system"),
+NAV_GROUPS = (
+    ("Work", (
+        ("/", "Overview", "overview"),
+        ("/standup", "Stand-up", "standup"),
+    )),
+    ("Organize", (
+        ("/rules", "Rules", "rules"),
+        ("/relationships", "Relationships", "relationships"),
+        ("/hidden", "Hidden", "hidden"),
+    )),
+    ("Review", (
+        ("/history", "History", "history"),
+        ("/backups", "Backups", "backups"),
+    )),
+    ("System", (
+        ("/settings", "Settings", "settings"),
+        ("/system", "System status", "system"),
+    )),
 )
+
+NAV_ITEMS = tuple(item for _, items in NAV_GROUPS for item in items)
 
 
 _ICON_PATHS = {
@@ -38,16 +48,23 @@ def icon_svg(name: str) -> str:
 
 
 def navigation_html(base: str = "", active_path: str | None = None) -> str:
-    links: list[str] = []
-    for path, label, icon in NAV_ITEMS:
-        active = " active" if active_path == path else ""
-        aria = ' aria-current="page"' if active else ""
-        href = f"{base}{path}" if path != "/" else f"{base}/"
-        links.append(
-            f'<a class="app-nav-link{active}" href="{escape(href, quote=True)}" data-nav-path="{escape(path, quote=True)}"{aria}>'
-            f'{icon_svg(icon)}<span>{escape(label)}</span></a>'
+    groups: list[str] = []
+    for group_label, items in NAV_GROUPS:
+        links: list[str] = []
+        for path, label, icon in items:
+            active = " active" if active_path == path else ""
+            aria = ' aria-current="page"' if active else ""
+            href = f"{base}{path}" if path != "/" else f"{base}/"
+            links.append(
+                f'<a class="app-nav-link{active}" href="{escape(href, quote=True)}" data-nav-path="{escape(path, quote=True)}"{aria}>'
+                f'{icon_svg(icon)}<span>{escape(label)}</span></a>'
+            )
+        groups.append(
+            '<section class="app-nav-group" aria-label="' + escape(group_label, quote=True) + '">'
+            '<h2 class="app-nav-heading">' + escape(group_label) + '</h2>'
+            '<div class="app-nav-links">' + "".join(links) + '</div></section>'
         )
-    return '<nav class="app-nav" aria-label="Primary">' + "".join(links) + "</nav>"
+    return '<nav class="app-nav" aria-label="Primary">' + "".join(groups) + "</nav>"
 
 
 def brand_html() -> str:
@@ -199,7 +216,19 @@ form { margin: 0; }
 .brand-copy { min-width: 0; display: grid; gap: 1px; }
 .brand-copy strong { font-size: 15px; letter-spacing: -.01em; }
 .brand-copy small { color: var(--muted); font-size: 11px; white-space: nowrap; }
-.app-nav { display: grid; gap: 5px; }
+.app-nav { display: grid; gap: 19px; }
+.app-nav-group { display: grid; gap: 7px; }
+.app-nav-heading {
+  margin: 0;
+  padding: 0 11px;
+  color: var(--faint);
+  font-size: 10px;
+  font-weight: 760;
+  letter-spacing: .11em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+.app-nav-links { display: grid; gap: 4px; }
 .app-nav-link {
   display: flex;
   align-items: center;
@@ -293,6 +322,146 @@ code { background: var(--surface-muted); border: 1px solid var(--border); border
 .relationship-page-card h3 { margin: 0; font-size: 16px; }
 .relationship-page-card > p { color: var(--muted); font-size: 12px; margin: 5px 0 0; }
 
+
+.command-palette-launcher {
+  position: fixed;
+  right: 22px;
+  bottom: 20px;
+  z-index: 70;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 11px;
+  color: var(--muted);
+  background: color-mix(in srgb,var(--surface-solid) 92%,transparent);
+  border: 1px solid var(--border-strong);
+  border-radius: 11px;
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(18px);
+  font-size: 12px;
+}
+.command-palette-launcher kbd,
+.command-palette kbd {
+  min-width: 22px;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  border-bottom-color: var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface-muted);
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+}
+.command-palette-backdrop[hidden] { display: none; }
+.command-palette-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  align-items: start;
+  justify-items: center;
+  padding: min(14vh,120px) 18px 30px;
+  background: rgba(6,9,16,.55);
+  backdrop-filter: blur(10px);
+}
+.command-palette {
+  width: min(680px,100%);
+  max-height: min(680px,76vh);
+  overflow: hidden;
+  background: var(--surface-solid);
+  border: 1px solid var(--border-strong);
+  border-radius: 20px;
+  box-shadow: 0 30px 90px rgba(0,0,0,.34);
+  display: grid;
+  grid-template-rows: auto minmax(0,1fr) auto;
+}
+.command-palette-search {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.command-palette-search svg { width: 20px; height: 20px; color: var(--muted); }
+.command-palette-search input {
+  width: 100%;
+  min-width: 0;
+  padding: 4px 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 17px;
+}
+.command-palette-results { overflow-y: auto; padding: 8px; }
+.command-palette-group-label {
+  padding: 9px 10px 5px;
+  color: var(--faint);
+  font-size: 10px;
+  font-weight: 760;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.command-palette-item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 34px minmax(0,1fr) auto;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 11px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+  color: var(--text);
+}
+.command-palette-item:hover,
+.command-palette-item.selected {
+  background: var(--accent-soft);
+  color: var(--text);
+  transform: none;
+  box-shadow: none;
+}
+.command-palette-item-icon {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  color: var(--accent);
+  background: var(--surface-muted);
+  font-size: 14px;
+  font-weight: 750;
+}
+.command-palette-item-copy { min-width: 0; display: grid; gap: 2px; }
+.command-palette-item-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.command-palette-item-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 11px; }
+.command-palette-item-hint { color: var(--faint); font-size: 11px; }
+.command-palette-empty { padding: 30px 18px; text-align: center; color: var(--muted); font-size: 13px; }
+.command-palette-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 15px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 10px;
+}
+.command-palette-footer span { display: inline-flex; align-items: center; gap: 5px; }
+.palette-target { animation: palette-target 1.5s ease; }
+@keyframes palette-target {
+  0%,100% { box-shadow: var(--shadow-sm); }
+  25%,70% { box-shadow: 0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent), var(--shadow-md); }
+}
+@media (max-width: 920px) {
+  .command-palette-launcher { right: 14px; bottom: 14px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
 }
@@ -314,6 +483,8 @@ code { background: var(--surface-muted); border: 1px solid var(--border); border
   .brand-copy { display: none; }
   .brand-mark { width: 34px; height: 34px; border-radius: 10px; }
   .app-nav { display: flex; gap: 4px; }
+  .app-nav-group, .app-nav-links { display: flex; gap: 4px; }
+  .app-nav-heading { display: none; }
   .app-nav-link { min-height: 36px; padding: 8px 9px; white-space: nowrap; }
   .app-nav-link span { display: none; }
   .sidebar-actions, .sidebar-note { display: none; }
@@ -332,6 +503,90 @@ code { background: var(--surface-muted); border: 1px solid var(--border); border
   .app-main { padding-inline: 14px; }
 }
 """
+
+
+def command_palette_html() -> str:
+    return '''<button type="button" class="command-palette-launcher" data-command-palette-open aria-label="Open command menu"><span>Commands</span><kbd>⌘K</kbd></button>
+<div class="command-palette-backdrop" id="command-palette-backdrop" hidden>
+  <section class="command-palette" role="dialog" aria-modal="true" aria-labelledby="command-palette-title">
+    <div class="command-palette-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg>
+      <input id="command-palette-input" type="search" autocomplete="off" spellcheck="false" placeholder="Search commands, tasks and pull requests…" aria-label="Command menu search">
+      <kbd>esc</kbd>
+    </div>
+    <div class="command-palette-results" id="command-palette-results" role="listbox"></div>
+    <div class="command-palette-footer"><span><kbd>↑↓</kbd> Navigate</span><span><kbd>↵</kbd> Open</span><span><kbd>⌘K</kbd> Toggle</span></div>
+  </section>
+</div>'''
+
+
+def command_palette_script(base: str = "") -> str:
+    import json
+
+    base_json = json.dumps(base.rstrip("/"))
+    nav = [
+        {"id": f"nav:{icon}", "label": f"Open {label}", "detail": group, "keywords": f"{label} {group} {icon}", "path": path, "icon": label[:1].upper()}
+        for group, items in NAV_GROUPS
+        for path, label, icon in items
+    ]
+    nav_json = json.dumps(nav)
+    return f'''<script>
+(() => {{
+  const base={base_json};
+  const backdrop=document.getElementById('command-palette-backdrop');
+  const input=document.getElementById('command-palette-input');
+  const results=document.getElementById('command-palette-results');
+  const openButtons=document.querySelectorAll('[data-command-palette-open]');
+  if(!backdrop||!input||!results)return;
+  const navCommands={nav_json}.map(item=>({{...item,group:'Navigate',run:()=>{{location.href=base+(item.path==='/'?'/':item.path)}}}}));
+  let commands=[...navCommands];let visible=[];let selected=0;let previousFocus=null;let mode='default';
+  const normalize=value=>(value||'').toLowerCase().normalize('NFKD');
+  const score=(item,query)=>{{
+    if(!query)return item.group==='Suggested'?100:item.group==='Tasks'?30:50;
+    const hay=normalize([item.label,item.detail,item.keywords].join(' '));
+    const words=normalize(query).split(/\\s+/).filter(Boolean);
+    if(!words.every(word=>hay.includes(word)))return -1;
+    let value=words.reduce((total,word)=>total+(normalize(item.label).startsWith(word)?16:normalize(item.label).includes(word)?9:3),0);
+    if(item.group==='Tasks')value+=2;return value;
+  }};
+  function escapeHtml(value){{const node=document.createElement('span');node.textContent=value||'';return node.innerHTML;}}
+  function render(){{
+    const query=input.value.trim();
+    visible=commands.map(item=>({{item,value:score(item,query)}})).filter(row=>row.value>=0).sort((a,b)=>b.value-a.value||a.item.label.localeCompare(b.item.label)).slice(0,18).map(row=>row.item);
+    selected=Math.min(selected,Math.max(0,visible.length-1));
+    if(!visible.length){{results.innerHTML='<div class="command-palette-empty">No matching commands or tasks.</div>';return;}}
+    let group='';results.innerHTML=visible.map((item,index)=>{{
+      const label=item.group||'Commands';const heading=label!==group?`<div class="command-palette-group-label">${{escapeHtml(label)}}</div>`:'';group=label;
+      return heading+`<button type="button" class="command-palette-item${{index===selected?' selected':''}}" data-palette-index="${{index}}" role="option" aria-selected="${{index===selected}}"><span class="command-palette-item-icon">${{escapeHtml(item.icon||'→')}}</span><span class="command-palette-item-copy"><strong>${{escapeHtml(item.label)}}</strong><small>${{escapeHtml(item.detail||'')}}</small></span><span class="command-palette-item-hint">${{escapeHtml(item.hint||'')}}</span></button>`;
+    }}).join('');
+    results.querySelectorAll('[data-palette-index]').forEach(button=>button.addEventListener('click',()=>execute(Number(button.dataset.paletteIndex))));
+    results.querySelector('.selected')?.scrollIntoView({{block:'nearest'}});
+  }}
+  function open(query=''){{previousFocus=document.activeElement;backdrop.hidden=false;input.value=query;selected=0;render();requestAnimationFrame(()=>input.focus());}}
+  function close(){{backdrop.hidden=true;mode='default';input.placeholder='Search commands, tasks and pull requests…';previousFocus?.focus?.();}}
+  function execute(index=selected){{const item=visible[index];if(!item)return;const keepOpen=item.keepOpen===true;item.run?.({{palette:api,item}});if(!keepOpen)close();}}
+  const api={{
+    register(items){{commands.push(...items);render();}},
+    replaceGroup(group,items){{commands=commands.filter(item=>item.group!==group);commands.push(...items);render();}},
+    open,close,render,
+    setMode(name,items,placeholder){{mode=name;commands=commands.filter(item=>item.group!=='Picker');commands.push(...items.map(item=>({{...item,group:'Picker'}})));input.value='';input.placeholder=placeholder||'Choose an item…';selected=0;render();}},
+    resetMode(){{mode='default';commands=commands.filter(item=>item.group!=='Picker');input.placeholder='Search commands, tasks and pull requests…';input.value='';selected=0;render();}},
+    get mode(){{return mode;}}
+  }};
+  window.TaskDigestCommandPalette=api;
+  openButtons.forEach(button=>button.addEventListener('click',()=>open()));
+  input.addEventListener('input',()=>{{selected=0;render();}});
+  input.addEventListener('keydown',event=>{{
+    if(event.key==='ArrowDown'){{event.preventDefault();selected=Math.min(visible.length-1,selected+1);render();}}
+    else if(event.key==='ArrowUp'){{event.preventDefault();selected=Math.max(0,selected-1);render();}}
+    else if(event.key==='Enter'){{event.preventDefault();execute();}}
+    else if(event.key==='Escape'){{event.preventDefault();if(mode!=='default')api.resetMode();else close();}}
+  }});
+  backdrop.addEventListener('mousedown',event=>{{if(event.target===backdrop)close();}});
+  document.addEventListener('keydown',event=>{{if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='k'){{event.preventDefault();backdrop.hidden?open():close();}}}});
+  render();
+}})();
+</script>'''
 
 
 SIMPLE_PAGE_CSS = SHARED_CSS + r"""
