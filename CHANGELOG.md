@@ -4,6 +4,23 @@ All notable changes to Task Digest are documented here.
 
 The project follows semantic versioning for public releases.
 
+## [1.0.7] - 2026-07-24
+
+### Changed
+
+- Promote Today’s Plan to the first dashboard section beneath the page header.
+- Reduce the always-visible summary row to Need action, Reviews, Waiting, and New updates.
+- Move due dates, PR blockers, investigations, and plan size into a compact collapsed More metrics panel.
+
+## [1.0.6] - 2026-07-24
+
+### Changed
+
+- Redesign task cards with always-visible priority, status, age, due-date, project, and update badges.
+- Present linked GitHub items as structured rows with compact live-status badges.
+- Add clear Open in Asana, Open on GitHub, and Open linked PR actions.
+- Move timelines, relationships, comments, notes, and write controls into one collapsed Details & actions area.
+
 ## [1.0.5] - 2026-07-24
 
 ### Fixed

@@ -382,3 +382,98 @@ def test_dashboard_uses_wide_two_column_workspace(tmp_path) -> None:
     assert "Work queue" in rendered
     assert "Attention & context" in rendered
     assert "width: min(1480px, 100%)" in rendered
+
+
+def test_task_card_has_scannable_badges_and_collapsed_details(tmp_path) -> None:
+    task = _task("asana:card", "Improve task cards", status="In Review", action_state="waiting", priority="high", due_on=date(2026, 7, 21))
+    task.age_basis = "status"
+    task.age_working_days = 3
+    task.project = "Product Sprint"
+    task.unread_updates = 2
+    output = tmp_path / "digest.html"
+    render_html(
+        [task],
+        datetime(2026, 7, 20, 10, 0, tzinfo=timezone.utc),
+        "dashboard",
+        str(output),
+        action_token="secret",
+        dashboard_url="http://127.0.0.1:8765",
+    )
+    rendered = output.read_text(encoding="utf-8")
+    assert 'class="priority-pill tone-high">High</span>' in rendered
+    assert 'class="task-meta"' in rendered
+    assert ">In Review</span>" in rendered
+    assert ">3 working days</span>" in rendered
+    assert ">Due tomorrow</span>" in rendered
+    assert ">Product Sprint</span>" in rendered
+    assert ">2 new</span>" in rendered
+    assert "Details &amp; actions" in rendered
+    assert "Open in Asana" in rendered
+
+
+def test_linked_github_row_has_live_status_badges(tmp_path) -> None:
+    from task_digest.models import GitHubLink
+
+    task = _task("asana:github-row", "Linked PR card", status="In Development")
+    task.github_links = [
+        GitHubLink(
+            owner="example-org",
+            repo="web-tests",
+            number=142,
+            url="https://github.com/example-org/web-tests/pull/142",
+            title="Improve permission coverage",
+            pending_reviewers=["reviewer"],
+            checks_pending=True,
+        )
+    ]
+    output = tmp_path / "digest.html"
+    render_html([task], datetime(2026, 7, 20, 10, 0, tzinfo=timezone.utc), "dashboard", str(output))
+    rendered = output.read_text(encoding="utf-8")
+    assert 'class="github-item"' in rendered
+    assert "PR #142 · example-org/web-tests" in rendered
+    assert "1 review pending" in rendered
+    assert "CI running" in rendered
+    assert "Open linked PR" in rendered
+
+
+def test_dashboard_promotes_today_plan_before_controls_and_metrics(tmp_path) -> None:
+    task = _task("asana:focus-first", "Plan-first task", status="In Development")
+    task.focus_rank = 0
+    output = tmp_path / "digest.html"
+    render_html(
+        [task],
+        datetime(2026, 7, 20, 10, 0, tzinfo=timezone.utc),
+        "dashboard",
+        str(output),
+        action_token="secret",
+        dashboard_url="http://127.0.0.1:8765",
+    )
+    rendered = output.read_text(encoding="utf-8")
+    plan_position = rendered.index("Today's plan")
+    controls_position = rendered.index('class="dashboard-controls"')
+    metrics_position = rendered.index('class="dashboard-metrics"')
+    assert plan_position < controls_position < metrics_position
+
+
+def test_dashboard_uses_four_primary_metrics_and_collapsed_secondary_metrics(tmp_path) -> None:
+    tasks = [
+        _task("1", "Action", status="In Development"),
+        _task("2", "Waiting", status="In Review", action_state="waiting"),
+        _task("3", "Investigation", optional=True),
+    ]
+    output = tmp_path / "digest.html"
+    render_html(tasks, datetime(2026, 7, 20, 10, 0, tzinfo=timezone.utc), "dashboard", str(output))
+    rendered = output.read_text(encoding="utf-8")
+    primary_start = rendered.index('class="summary-grid primary-metrics"')
+    secondary_start = rendered.index('class="more-metrics"')
+    primary_html = rendered[primary_start:secondary_start]
+    assert primary_html.count('class="summary-card ') == 4
+    assert "Need action" in primary_html
+    assert "Reviews" in primary_html
+    assert "Waiting" in primary_html
+    assert "New updates" in primary_html
+    assert "More metrics" in rendered
+    assert "Due / overdue" in rendered
+    assert "PR blockers" in rendered
+    assert "Investigations" in rendered
+    assert "Plan items" in rendered

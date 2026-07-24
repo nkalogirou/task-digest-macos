@@ -98,11 +98,12 @@ input[type=search] {
 .filter-bar button { border: 0; background: transparent; padding: 8px 11px; color: var(--muted); font-size: 12px; }
 .filter-bar button:hover { background: var(--surface-muted); color: var(--text); box-shadow: none; transform: none; }
 .filter-bar button.active { background: var(--accent-soft); color: var(--accent); }
+.dashboard-metrics { margin: 18px 0 22px; }
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(4,minmax(0,1fr));
   gap: 11px;
-  margin: 18px 0 22px;
+  margin: 0;
 }
 .summary-card {
   position: relative;
@@ -130,6 +131,53 @@ input[type=search] {
 .summary-card.tone-success { --metric-color: var(--success); }
 .summary-card.tone-info { --metric-color: var(--info); }
 .summary-card.tone-accent { --metric-color: var(--accent); }
+.more-metrics {
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.more-metrics > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 680;
+}
+.more-metrics > summary::-webkit-details-marker { display: none; }
+.more-metrics > summary::after {
+  content: "›";
+  margin-left: auto;
+  color: var(--faint);
+  font-size: 19px;
+  line-height: 1;
+  transition: transform .16s ease;
+}
+.more-metrics[open] > summary::after { transform: rotate(90deg); }
+.more-metrics > summary span { color: var(--muted); font-size: 11px; font-weight: 520; }
+.secondary-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 9px;
+  padding: 0 10px 10px;
+}
+.summary-card.compact-metric {
+  min-height: 62px;
+  grid-template-columns: 30px 1fr;
+  column-gap: 9px;
+  padding: 10px 11px;
+  border-radius: 12px;
+  box-shadow: none;
+}
+.summary-card.compact-metric .metric-icon { width: 30px; height: 30px; border-radius: 9px; font-size: 13px; }
+.summary-card.compact-metric strong { font-size: 18px; }
+.summary-card.compact-metric span:last-child { margin-top: 2px; font-size: 10px; }
 .dashboard-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1.65fr) minmax(340px, .9fr);
@@ -201,7 +249,7 @@ details[open] > summary::after { transform: rotate(90deg); }
 .mini-grid div { display: flex; flex-direction: column; background: var(--surface-solid); border: 1px solid var(--border); padding: 10px; border-radius: 10px; }
 .mini-grid strong { font-size: 18px; }
 .mini-grid span { font-size: 10px; color: var(--muted); margin-top: 2px; }
-.focus-section { margin: 24px 0; }
+.focus-section { margin: 8px 0 22px; }
 .plan-section { position: relative; overflow: hidden; background: linear-gradient(135deg, color-mix(in srgb,var(--accent) 8%,var(--surface)) 0%, var(--surface) 45%, color-mix(in srgb,var(--accent-2) 7%,var(--surface)) 100%); border: 1px solid color-mix(in srgb,var(--accent) 18%,var(--border)); border-radius: 22px; padding: 20px; box-shadow: var(--shadow-md); }
 .plan-section::after { content: ""; position: absolute; right: -80px; top: -100px; width: 230px; height: 230px; border-radius: 50%; background: color-mix(in srgb,var(--accent) 8%,transparent); pointer-events: none; }
 .section-head { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 12px; }
@@ -229,34 +277,70 @@ details[open] > summary::after { transform: rotate(90deg); }
   position: relative;
   background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 16px 17px 16px 20px;
-  margin: 9px 0;
+  border-radius: 18px;
+  padding: 18px 18px 16px 21px;
+  margin: 10px 0;
   box-shadow: var(--shadow-sm);
   transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
 }
-.task::before { content: ""; position: absolute; left: 0; top: 16px; bottom: 16px; width: 4px; border-radius: 0 4px 4px 0; background: var(--priority-color); }
+.task::before { content: ""; position: absolute; left: 0; top: 17px; bottom: 17px; width: 4px; border-radius: 0 4px 4px 0; background: var(--priority-color); }
 .task:hover { transform: translateY(-1px); border-color: color-mix(in srgb,var(--priority-color) 30%,var(--border)); box-shadow: var(--shadow-md); }
-.task.compact { cursor: grab; margin: 0; }
+.task.compact { cursor: grab; margin: 0; padding-block: 14px; }
 .task.compact.dragging { opacity: .45; }
 .task.focused { border-color: color-mix(in srgb,var(--accent) 45%,var(--border)); box-shadow: 0 0 0 3px color-mix(in srgb,var(--accent) 8%,transparent), var(--shadow-sm); }
 .priority-urgent { --priority-color: var(--danger); }
 .priority-high { --priority-color: #d97706; }
 .priority-normal { --priority-color: #ca8a04; }
 .priority-new { --priority-color: var(--success); }
-.task-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
-.task h3 { margin: 0 0 7px; font-size: 16px; line-height: 1.35; letter-spacing: -.012em; }
+.task-head { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; }
+.task-title-wrap { min-width: 0; }
+.task h3 { margin: 0; font-size: 16px; line-height: 1.35; letter-spacing: -.012em; }
 .task h3 a { color: var(--text); }
 .task h3 a:hover { color: var(--accent); }
-.task > p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
-.badge { flex: 0 0 auto; background: var(--surface-muted); border: 1px solid var(--border); border-radius: 999px; padding: 5px 8px; color: var(--muted); font-size: 10px; font-weight: 650; white-space: nowrap; }
-.local-note { margin-top: 11px!important; color: var(--text)!important; background: var(--accent-soft); border: 1px solid color-mix(in srgb,var(--accent) 18%,var(--border)); padding: 10px 11px; border-radius: 11px; }
-.github { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
-.github-link { display: inline-flex; align-items: center; gap: 6px; background: var(--info-soft); border: 1px solid color-mix(in srgb,var(--info) 20%,var(--border)); color: var(--info); border-radius: 999px; padding: 6px 9px; font-size: 11px; font-weight: 680; }
-.github-link::before { content: "↗"; font-size: 10px; }
-.pr-alert, .pr-status { margin-top: 10px; padding: 10px 11px; border-radius: 11px; display: flex; flex-direction: column; gap: 3px; font-size: 12px; }
+.priority-pill, .task-flag, .meta-chip {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  white-space: nowrap;
+  font-weight: 680;
+}
+.priority-pill { flex: 0 0 auto; padding: 5px 9px; font-size: 10px; color: var(--priority-color); background: color-mix(in srgb,var(--priority-color) 10%,var(--surface-muted)); border-color: color-mix(in srgb,var(--priority-color) 24%,var(--border)); }
+.task-flags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+.task-flag { padding: 4px 8px; font-size: 10px; color: var(--accent); background: var(--accent-soft); border-color: color-mix(in srgb,var(--accent) 22%,var(--border)); }
+.task-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 11px; }
+.meta-chip { padding: 5px 8px; font-size: 10px; color: var(--muted); background: var(--surface-muted); }
+.meta-chip.tone-danger { color: var(--danger); background: var(--danger-soft); border-color: color-mix(in srgb,var(--danger) 20%,var(--border)); }
+.meta-chip.tone-warning { color: var(--warning); background: var(--warning-soft); border-color: color-mix(in srgb,var(--warning) 22%,var(--border)); }
+.meta-chip.tone-info { color: var(--info); background: var(--info-soft); border-color: color-mix(in srgb,var(--info) 20%,var(--border)); }
+.meta-chip.tone-success { color: var(--success); background: var(--success-soft); border-color: color-mix(in srgb,var(--success) 20%,var(--border)); }
+.meta-chip.tone-accent { color: var(--accent); background: var(--accent-soft); border-color: color-mix(in srgb,var(--accent) 20%,var(--border)); }
+.local-note { margin: 12px 0 0!important; color: var(--text)!important; background: var(--accent-soft); border: 1px solid color-mix(in srgb,var(--accent) 18%,var(--border)); padding: 10px 12px; border-radius: 12px; display: grid; gap: 3px; }
+.local-note strong { color: var(--accent); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
+.local-note span { font-size: 12px; line-height: 1.45; }
+.github-list { display: grid; gap: 7px; margin-top: 12px; }
+.github-item { display: grid; grid-template-columns: minmax(0,1fr) auto auto; align-items: center; gap: 8px; min-height: 38px; padding: 8px 10px; color: var(--text); background: var(--info-soft); border: 1px solid color-mix(in srgb,var(--info) 18%,var(--border)); border-radius: 12px; }
+.github-item:hover { border-color: color-mix(in srgb,var(--info) 35%,var(--border)); }
+.github-item-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--info); font-size: 11px; font-weight: 680; }
+.github-item-badges { display: flex; gap: 5px; }
+.github-item-badges:empty { display: none; }
+.github-item-arrow { color: var(--info); font-size: 11px; }
+.pr-alert, .pr-status { margin-top: 9px; padding: 10px 11px; border-radius: 11px; display: flex; flex-direction: column; gap: 3px; font-size: 12px; }
 .pr-alert { background: var(--warning-soft); color: var(--warning); border: 1px solid color-mix(in srgb,var(--warning) 25%,var(--border)); }
 .pr-status { background: var(--info-soft); color: var(--info); border: 1px solid color-mix(in srgb,var(--info) 18%,var(--border)); }
+.task-quick-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.task-quick-link { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11px; font-weight: 650; }
+.task-quick-link:hover { color: var(--accent); }
+.task-details { margin-top: 13px; border-top: 1px solid var(--border); padding-top: 11px; }
+.task-details > summary { cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 12px; font-weight: 650; }
+.task-details > summary::-webkit-details-marker { display: none; }
+.task-details > summary::after { content: "›"; color: var(--faint); font-size: 20px; margin-left: auto; transition: transform .16s ease; }
+.task-details[open] > summary::after { transform: rotate(90deg); }
+.task-details > summary span { margin-left: 0; margin-right: 5px; font-size: 10px; font-weight: 550; }
+.task-details-body { margin-top: 8px; }
+.task-details-body > :first-child { margin-top: 0; }
+.context-details ul { margin: 9px 0 0; padding-left: 20px; color: var(--muted); font-size: 11px; line-height: 1.5; }
 .timeline, .context-details, .comments, .task-controls, .asana-actions { margin-top: 11px; border-top: 1px solid var(--border); padding-top: 10px; }
 .timeline summary, .context-details summary, .comments summary, .task-controls summary, .asana-actions > summary { cursor: pointer; color: var(--muted); font-size: 12px; font-weight: 620; }
 .timeline summary { display: flex; justify-content: space-between; gap: 10px; }
@@ -301,20 +385,24 @@ footer { margin-top: 28px; padding: 18px 0; color: var(--muted); font-size: 11px
   .dashboard-secondary { position: static; grid-template-columns: repeat(2,minmax(0,1fr)); }
   .dashboard-secondary .dashboard-column-heading { grid-column: 1 / -1; }
 }
-@media (max-width: 1120px) { .summary-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 1120px) {
+  .summary-grid, .secondary-metric-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
 @media (max-width: 700px) {
   .dashboard-header { position: static; margin: 0 0 18px; padding: 0; background: none; backdrop-filter: none; }
   .dashboard-controls { grid-template-columns: 1fr; }
   .filter-bar { overflow-x: auto; flex-wrap: nowrap; }
   .section-head { align-items: flex-start; flex-direction: column; }
   .plan-actions { justify-content: flex-start; }
-  .task-head { display: block; }
-  .badge { display: inline-block; margin-top: 6px; }
+  .task-head { align-items: flex-start; }
+  .priority-pill { margin-top: 1px; }
+  .github-item { grid-template-columns: minmax(0,1fr) auto; }
+  .github-item-badges { grid-column: 1 / -1; }
   .dashboard-secondary { grid-template-columns: 1fr; }
   .dashboard-secondary .dashboard-column-heading { grid-column: auto; }
   .inline-editor, .note-editor, .action-editor, .comment-editor { grid-template-columns: 1fr; }
 }
-@media (max-width: 440px) { .summary-grid { grid-template-columns: 1fr; } }
+@media (max-width: 440px) { .summary-grid, .secondary-metric-grid { grid-template-columns: 1fr; } }
 """
 
 
@@ -841,50 +929,143 @@ def _timeline_html(item: TaskItem) -> str:
     )
 
 
+
+def _meta_chip(label: str, tone: str = "neutral", title: str | None = None) -> str:
+    title_attr = f' title="{escape(title, quote=True)}"' if title else ""
+    return f'<span class="meta-chip tone-{escape(tone, quote=True)}"{title_attr}>{escape(label)}</span>'
+
+
+def _task_meta_html(item: TaskItem, today: date) -> str:
+    chips: list[str] = []
+    if item.status:
+        tone = "danger" if item.github_kind == "authored_pr" else ("warning" if item.action_state == "waiting" else "info")
+        chips.append(_meta_chip(item.status, tone, "Current status"))
+
+    if item.age_basis == "status" and item.status:
+        age = "Today" if item.age_working_days == 0 else _working_day_phrase(item.age_working_days)
+        chips.append(_meta_chip(age, "neutral", f"Time in {item.status}"))
+    else:
+        chips.append(_meta_chip(_age_description(item), "neutral", "Task age"))
+
+    due = _due_description(item, today)
+    if due:
+        if item.due_on and item.due_on <= today:
+            tone = "danger"
+        elif item.due_on and working_days_until(today, item.due_on) <= 1:
+            tone = "warning"
+        else:
+            tone = "info"
+        chips.append(_meta_chip(due, tone, "Due date"))
+
+    if item.project:
+        chips.append(_meta_chip(item.project, "neutral", "Project or repository"))
+    if item.unread_updates:
+        chips.append(_meta_chip(f"{item.unread_updates} new", "accent", "Unread updates"))
+    if item.manual_priority:
+        chips.append(_meta_chip(f"Manual: {item.manual_priority.title()}", "accent", "Manual priority override"))
+    return f'<div class="task-meta">{"".join(chips)}</div>' if chips else ""
+
+
+def _task_context_html(item: TaskItem) -> str:
+    rows: list[str] = []
+    for note in item.notes:
+        rows.append(f'<li>{escape(note)}</li>')
+    if item.rule_matches:
+        rows.append(f'<li>Matched rule: {escape(item.rule_matches[-1])}</li>')
+    if not rows:
+        return ""
+    return f'<details class="context-details"><summary>Context <span>{len(rows)}</span></summary><ul>{"".join(rows)}</ul></details>'
+
+
+def _task_quick_actions(item: TaskItem) -> str:
+    links: list[str] = []
+    if item.url:
+        label = "Open in Asana" if item.source == "asana" else "Open on GitHub"
+        links.append(f'<a class="task-quick-link" href="{escape(item.url, quote=True)}">{label}<span aria-hidden="true">↗</span></a>')
+    visible = _visible_github_links(item)
+    if item.source == "asana" and visible:
+        links.append(f'<a class="task-quick-link" href="{escape(visible[0].url, quote=True)}">Open linked PR<span aria-hidden="true">↗</span></a>')
+    return f'<div class="task-quick-actions">{"".join(links)}</div>' if links else ""
+
+
+def _task_secondary_html(item: TaskItem) -> str:
+    content = (
+        _task_context_html(item)
+        + _timeline_html(item)
+        + _relations_html(item)
+        + _comments_html(item)
+        + _asana_write_controls(item)
+        + _task_controls(item)
+    )
+    if not content:
+        return ""
+    return f'<details class="task-details"><summary>Details &amp; actions <span>Expand</span></summary><div class="task-details-body">{content}</div></details>'
+
+
 def _task_card(item: TaskItem, today: date, badge: str | None = None, compact: bool = False) -> str:
     title = escape(item.title)
     if item.url:
         title = f'<a href="{escape(item.url, quote=True)}">{title}</a>'
-    detail = escape(" · ".join(_details(item, today)))
-    github_links = []
-    alerts = []
+
+    github_rows: list[str] = []
+    alerts: list[str] = []
     for link in _visible_github_links(item):
-        github_links.append(
-            f'<a class="github-link" href="{escape(link.url, quote=True)}">{escape(_github_link_label(link))}</a>'
-        )
+        state_badges: list[str] = []
         if link.action_reasons:
+            state_badges.append(_meta_chip("Action required", "danger"))
             alerts.append(
-                '<div class="pr-alert"><strong>⚠ GitHub action required</strong>'
+                '<div class="pr-alert"><strong>GitHub action required</strong>'
                 f'<span>{escape(" · ".join(link.action_reasons))}</span></div>'
             )
-        elif link.pending_reviewers or link.checks_pending or link.approvals:
-            status: list[str] = []
+        else:
             if link.pending_reviewers:
-                status.append("Reviewers: " + ", ".join("@" + name for name in link.pending_reviewers))
+                state_badges.append(_meta_chip(f"{len(link.pending_reviewers)} review pending", "warning"))
             if link.checks_pending:
-                status.append("CI running")
+                state_badges.append(_meta_chip("CI running", "info"))
             if link.approvals:
-                status.append(f"{link.approvals} approval(s)")
-            alerts.append(f'<div class="pr-status"><span>{escape(" · ".join(status))}</span></div>')
+                state_badges.append(_meta_chip(f"{link.approvals} approved", "success"))
+        github_rows.append(
+            f'<a class="github-item" href="{escape(link.url, quote=True)}">'
+            f'<span class="github-item-label">{escape(_github_link_label(link))}</span>'
+            f'<span class="github-item-badges">{"".join(state_badges)}</span>'
+            '<span class="github-item-arrow" aria-hidden="true">↗</span></a>'
+        )
+
     badge_value = badge or ("Follow-up suggested" if item.stale_waiting else None)
-    if item.unread_updates:
-        badge_value = f"{item.unread_updates} new update(s)" if not badge_value else badge_value
+    if item.unread_updates and not badge_value:
+        badge_value = f"{item.unread_updates} new update(s)"
     if item.rule_matches and not badge_value:
         badge_value = f"Rule: {item.rule_matches[-1]}"
-    badge_html = f'<span class="badge">{escape(badge_value)}</span>' if badge_value else ""
-    note_html = f'<p class="local-note">📝 {escape(item.local_note)}</p>' if item.local_note else ""
+
+    priority_label = item.priority.title()
+    flags = f'<span class="task-flag">{escape(badge_value)}</span>' if badge_value else ""
+    note_html = f'<p class="local-note"><strong>Private note</strong><span>{escape(item.local_note)}</span></p>' if item.local_note else ""
     focused = " focused" if item.is_focused else ""
     compact_class = " compact" if compact else ""
     draggable = ' draggable="true"' if compact else ""
     group = "github" if item.source == "github" else ("waiting" if item.action_state == "waiting" else "action")
+
     return (
         f'<article class="task priority-{item.priority}{focused}{compact_class}" data-key="{escape(item.key, quote=True)}" '
         f'data-group="{group}" data-title="{escape(item.title.casefold(), quote=True)}"{draggable}>'
-        f'<div class="task-head"><h3>{title}</h3>{badge_html}</div><p>{detail}</p>{note_html}'
-        + (f'<div class="github">{"".join(github_links)}</div>' if github_links else "")
+        '<div class="task-head">'
+        f'<div class="task-title-wrap"><h3>{title}</h3><div class="task-flags">{flags}</div></div>'
+        f'<span class="priority-pill tone-{item.priority}">{escape(priority_label)}</span></div>'
+        f'{_task_meta_html(item, today)}{note_html}'
+        + (f'<div class="github-list">{"".join(github_rows)}</div>' if github_rows else "")
         + "".join(alerts)
-        + ("" if compact else _timeline_html(item) + _relations_html(item) + _comments_html(item) + _asana_write_controls(item) + _task_controls(item))
+        + _task_quick_actions(item)
+        + ("" if compact else _task_secondary_html(item))
         + "</article>"
+    )
+
+
+def _summary_card(value: int, label: str, icon: str, tone: str, *, compact: bool = False) -> str:
+    compact_class = " compact-metric" if compact else ""
+    return (
+        f'<button type="button" class="summary-card tone-{tone}{compact_class}" '
+        f'data-filter="{escape(label.casefold(), quote=True)}" aria-label="Filter by {escape(label, quote=True)}">'
+        f'<span class="metric-icon" aria-hidden="true">{icon}</span><strong>{value}</strong><span>{escape(label)}</span></button>'
     )
 
 
@@ -893,21 +1074,27 @@ def _summary_cards(tasks: list[TaskItem], today: date) -> str:
     reviews, authored = github_reviews(tasks), github_authored_prs(tasks)
     focus = [item for item in tasks if item.is_focused]
     unread = sum(item.unread_updates for item in tasks)
-    metrics = [
-        (len(focus), "Today’s plan", "◎", "accent"),
+    primary_metrics = [
         (len(action), "Need action", "!", "danger"),
-        (_due_now_count(action, today), "Due / overdue", "◷", "warning"),
         (len(reviews), "Reviews", "✓", "info"),
-        (len(authored), "PR blockers", "↗", "danger"),
-        (unread, "New updates", "•", "accent"),
         (len(waiting), "Waiting", "…", "warning"),
-        (len(optional), "Investigations", "?", "success"),
+        (unread, "New updates", "•", "accent"),
     ]
-    return '<div class="summary-grid">' + "".join(
-        f'<button type="button" class="summary-card tone-{tone}" data-filter="{escape(label.casefold(), quote=True)}" aria-label="Filter by {escape(label, quote=True)}">'
-        f'<span class="metric-icon" aria-hidden="true">{icon}</span><strong>{value}</strong><span>{escape(label)}</span></button>'
-        for value, label, icon, tone in metrics
-    ) + "</div>"
+    secondary_metrics = [
+        (_due_now_count(action, today), "Due / overdue", "◷", "warning"),
+        (len(authored), "PR blockers", "↗", "danger"),
+        (len(optional), "Investigations", "?", "success"),
+        (len(focus), "Plan items", "◎", "accent"),
+    ]
+    primary = "".join(_summary_card(*metric) for metric in primary_metrics)
+    secondary = "".join(_summary_card(*metric, compact=True) for metric in secondary_metrics)
+    return (
+        '<section class="dashboard-metrics" aria-label="Work summary">'
+        f'<div class="summary-grid primary-metrics">{primary}</div>'
+        '<details class="more-metrics"><summary>More metrics '
+        '<span>Due dates, PR blockers, investigations and plan size</span></summary>'
+        f'<div class="secondary-metric-grid">{secondary}</div></details></section>'
+    )
 
 
 def _source_status_html(source_statuses: list[SourceStatus] | None) -> str:
@@ -1053,7 +1240,6 @@ def _main_content(
     action, waiting, optional = split_tasks(tasks)
     reviews, authored = github_reviews(tasks), github_authored_prs(tasks)
     issues, mentions = github_assigned_issues(tasks), github_mentions(tasks)
-    focus = _focus_section(tasks, now.date(), smart_plan_max_items, smart_plan_stale_waiting_limit)
     primary_parts: list[str] = []
     secondary_parts: list[str] = []
     if period == "evening" and changes and changes.baseline_available:
@@ -1083,8 +1269,7 @@ def _main_content(
     primary_label = f"{len(action)} action · {len(waiting)} waiting"
     secondary_label = f"{len(authored) + len(reviews) + len(issues) + len(mentions)} GitHub item(s)"
     return (
-        focus
-        + '<div class="dashboard-workspace">'
+        '<div class="dashboard-workspace">'
         + '<section class="dashboard-primary"><div class="dashboard-column-heading"><h2>Work queue</h2>'
         + f'<span>{escape(primary_label)}</span></div>{"".join(primary_parts)}</section>'
         + '<aside class="dashboard-secondary"><div class="dashboard-column-heading"><h2>Attention & context</h2>'
@@ -1132,6 +1317,7 @@ def render_html(
     sidebar = f'<aside class="app-sidebar">{brand_html()}{navigation_html(base, active_path="/")}{sidebar_actions}</aside>'
     auto_refresh = f'<script>setTimeout(()=>window.location.reload(),{max(1, refresh_minutes) * 60000});</script>' if dashboard_url else ""
     meta = _source_status_html(source_statuses) + _summary_panel(summaries)
+    focus_html = _focus_section(tasks, now.date(), smart_plan_max_items, smart_plan_stale_waiting_limit)
     main_content = _main_content(
         tasks,
         now,
@@ -1148,6 +1334,7 @@ def render_html(
 <title>Your task digest</title>
 <style>{DASHBOARD_CSS}</style></head>
 <body><div class="app-shell">{sidebar}<main class="app-main"><div class="app-content"><header class="dashboard-header"><div class="page-header"><div class="page-title-wrap"><span class="eyebrow">Overview</span><h1>Your task digest</h1><p class="page-subtitle">{escape(subtitle)} · {now:%A, %d %B %Y at %H:%M}</p></div><div class="header-status">Auto-refresh every {max(1, refresh_minutes)} min</div></div></header>
+{focus_html}
 <div class="dashboard-controls"><div class="search-wrap"><input id="task-search" type="search" placeholder="Search tasks, PRs, projects…" aria-label="Search tasks"></div><div class="filter-bar"><button type="button" class="active" data-view="all">All</button><button type="button" data-view="action">Action</button><button type="button" data-view="github">GitHub</button><button type="button" data-view="waiting">Waiting</button><button type="button" data-view="unread">Updates</button></div></div>
 {_summary_cards(tasks, now.date())}{main_content}
 <div id="toast" role="status" aria-live="polite"></div>
