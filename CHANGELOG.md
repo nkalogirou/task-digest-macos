@@ -4,6 +4,28 @@ All notable changes to Task Digest are documented here.
 
 The project follows semantic versioning for public releases.
 
+## [1.0.22] - 2026-07-27
+
+### Fixed
+
+- Synchronized the public repository safety checker with its tests.
+- Ignored local runtime files such as `.env` and log files are no longer treated as publishable content.
+- Runtime files force-added to Git are still rejected with a clear `runtime file could be published` error.
+
+## [1.0.21] - 2026-07-27
+
+### Changed
+
+- Make Today’s Plan rows shorter, title-clickable, and draggable only from a dedicated handle.
+- Redesign the inline priority selector so the selected priority and Auto/Manual mode never overlap.
+- Collapse the detailed GitHub PR cockpit by default while keeping a concise blocker summary visible.
+- Replace isolated accordion counts with descriptive summaries for checks, reviews, feedback, scope, and activity.
+
+### Fixed
+
+- Make View details reliably clear filters, open the correct section and task details, scroll to the target card, and show an error toast when the card is unavailable.
+- Ignore harmless BrokenPipeError and ConnectionResetError events when browsers refresh or close local dashboard requests.
+
 ## [1.0.20] - 2026-07-27
 
 ### Fixed
