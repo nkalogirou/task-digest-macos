@@ -4,6 +4,13 @@ All notable changes to Task Digest are documented here.
 
 The project follows semantic versioning for public releases.
 
+## [1.0.19] - 2026-07-27
+
+### Fixed
+
+- Update the PR cockpit rendering test to match the compact merge-readiness label introduced in v1.0.16.
+- Prevent a stale test expectation from reporting a false failure after applying cumulative UI patches.
+
 ## [1.0.18] - 2026-07-27
 
 ### Changed
