@@ -56,6 +56,13 @@ def _github_snapshot(item: TaskItem) -> list[dict[str, Any]]:
             "pending_reviewers": list(link.pending_reviewers),
             "checks_pending": link.checks_pending,
             "approvals": link.approvals,
+            "review_decision": link.review_decision,
+            "merge_state_status": link.merge_state_status,
+            "unresolved_threads": len(link.unresolved_threads),
+            "checks": [
+                {"name": check.name, "bucket": check.bucket, "state": check.state}
+                for check in link.checks
+            ],
         }
         for link in item.github_links
     ]

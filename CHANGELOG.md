@@ -4,6 +4,14 @@ All notable changes to Task Digest are documented here.
 
 The project follows semantic versioning for public releases.
 
+## [1.0.20] - 2026-07-27
+
+### Fixed
+
+- Ship the GitHub PR cockpit model and client changes as a cumulative update so incremental installations cannot end up with a new renderer and an older `GitHubLink` model.
+- Restore detailed check enrichment, including failed-check names, for repositories updated through the patch series.
+- Add a regression test covering the detailed PR cockpit fields on `GitHubLink`.
+
 ## [1.0.19] - 2026-07-27
 
 ### Fixed

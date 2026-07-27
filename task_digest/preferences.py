@@ -35,7 +35,10 @@ def task_fingerprint(item: TaskItem) -> str:
     due = item.due_on.isoformat() if item.due_on else ""
     links = ",".join(
         sorted(
-            f"{link.key}:{link.state or ''}:{link.is_draft}:{'|'.join(link.action_reasons)}"
+            f"{link.key}:{link.state or ''}:{link.is_draft}:{'|'.join(link.action_reasons)}:"
+            f"{link.review_decision or ''}:{link.merge_state_status or ''}:"
+            f"{len(link.unresolved_threads)}:"
+            f"{'|'.join(f'{check.name}:{check.bucket}:{check.state}' for check in link.checks)}"
             for link in item.github_links
         )
     )

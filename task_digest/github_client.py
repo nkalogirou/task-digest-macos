@@ -10,7 +10,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Iterable, Sequence
 
-from .models import GitHubLink, TaskEvent, TaskItem
+from .models import (
+    GitHubCheckDetail,
+    GitHubLink,
+    GitHubReviewDetail,
+    GitHubReviewThread,
+    TaskEvent,
+    TaskItem,
+)
 
 
 class GitHubClientError(RuntimeError):
@@ -186,6 +193,83 @@ def _approval_count(value: object) -> int:
     return len(authors)
 
 
+def _plain_excerpt(value: object, limit: int = 260) -> str:
+    text = str(value or "")
+    text = re.sub(r"```.*?```", " ", text, flags=re.DOTALL)
+    text = re.sub(r"`([^`]*)`", r"\1", text)
+    text = re.sub(r"!\[[^]]*\]\([^)]*\)", " ", text)
+    text = re.sub(r"\[([^]]+)\]\([^)]*\)", r"\1", text)
+    text = re.sub(r"^[>#*+\-]+\s*", "", text, flags=re.MULTILINE)
+    text = re.sub(r"\s+", " ", text).strip()
+    if len(text) <= limit:
+        return text
+    return text[: max(0, limit - 1)].rstrip() + "…"
+
+
+def _review_details(latest_reviews: object, review_requests: object) -> list[GitHubReviewDetail]:
+    pending = _reviewer_names(review_requests)
+    reviews: dict[str, GitHubReviewDetail] = {}
+    if isinstance(latest_reviews, list):
+        for entry in latest_reviews:
+            if not isinstance(entry, dict):
+                continue
+            author = entry.get("author") or {}
+            reviewer = str(author.get("login") or author.get("name") or "") if isinstance(author, dict) else ""
+            if not reviewer:
+                continue
+            reviews[reviewer] = GitHubReviewDetail(
+                reviewer=reviewer,
+                state=str(entry.get("state") or "COMMENTED").upper(),
+                submitted_at=_parse_datetime(entry.get("submittedAt")),
+                body=_plain_excerpt(entry.get("body"), 220) or None,
+                url=str(entry.get("url") or "") or None,
+                requested=reviewer in pending,
+            )
+    for reviewer in pending:
+        existing = reviews.get(reviewer)
+        if existing is not None:
+            existing.requested = True
+            continue
+        reviews[reviewer] = GitHubReviewDetail(
+            reviewer=reviewer,
+            state="PENDING",
+            requested=True,
+        )
+    return sorted(
+        reviews.values(),
+        key=lambda item: (item.state != "CHANGES_REQUESTED", item.state != "PENDING", item.reviewer.casefold()),
+    )
+
+
+def _last_commit_time(value: object) -> datetime | None:
+    if not isinstance(value, list):
+        return None
+    times: list[datetime] = []
+    for entry in value:
+        if not isinstance(entry, dict):
+            continue
+        parsed = _parse_datetime(entry.get("committedDate") or entry.get("authoredDate"))
+        if parsed:
+            times.append(parsed)
+    return max(times) if times else None
+
+
+def _top_file_paths(value: object, limit: int = 8) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    rows: list[tuple[int, str]] = []
+    for entry in value:
+        if not isinstance(entry, dict):
+            continue
+        path = str(entry.get("path") or "").strip()
+        if not path:
+            continue
+        score = int(entry.get("additions") or 0) + int(entry.get("deletions") or 0)
+        rows.append((score, path))
+    rows.sort(key=lambda row: (-row[0], row[1].casefold()))
+    return [path for _, path in rows[:limit]]
+
+
 class GitHubClient:
     def __init__(
         self,
@@ -211,14 +295,18 @@ class GitHubClient:
             "GitHub CLI was not found. Install it with 'brew install gh', then run 'gh auth login --web'."
         )
 
-    def _run(self, *args: str) -> str:
+    def _run_allowed(self, *args: str, allowed_codes: set[int] | None = None) -> str:
         env = dict(os.environ)
         env["GH_PAGER"] = "cat"
         result = self._runner([self.cli_path, *args], env)
-        if result.returncode != 0:
+        allowed = allowed_codes or {0}
+        if result.returncode not in allowed:
             message = (result.stderr or result.stdout or "Unknown GitHub CLI error").strip()
             raise GitHubClientError(message)
         return result.stdout.strip()
+
+    def _run(self, *args: str) -> str:
+        return self._run_allowed(*args, allowed_codes={0})
 
     def current_login(self) -> str:
         if self._login:
@@ -490,6 +578,20 @@ class GitHubClient:
         target.updated_at = source.updated_at
         target.merged_at = source.merged_at
         target.closed_at = source.closed_at
+        target.merge_state_status = source.merge_state_status
+        target.checks = list(source.checks)
+        target.reviews = list(source.reviews)
+        target.unresolved_threads = list(source.unresolved_threads)
+        target.changed_files = source.changed_files
+        target.additions = source.additions
+        target.deletions = source.deletions
+        target.commit_count = source.commit_count
+        target.top_files = list(source.top_files)
+        target.base_ref_name = source.base_ref_name
+        target.head_ref_name = source.head_ref_name
+        target.head_ref_oid = source.head_ref_oid
+        target.last_commit_at = source.last_commit_at
+        target.last_review_at = source.last_review_at
 
     def _load_linked_pull_status(self, link: GitHubLink) -> None:
         repository = f"{link.owner}/{link.repo}"
@@ -500,7 +602,12 @@ class GitHubClient:
             "--repo",
             repository,
             "--json",
-            "number,title,url,isDraft,state,reviewDecision,statusCheckRollup,mergeStateStatus,mergeable,createdAt,updatedAt,mergedAt,closedAt,reviewRequests,latestReviews",
+            (
+                "number,title,url,isDraft,state,reviewDecision,statusCheckRollup,"
+                "mergeStateStatus,mergeable,createdAt,updatedAt,mergedAt,closedAt,"
+                "reviewRequests,latestReviews,additions,deletions,changedFiles,"
+                "commits,files,baseRefName,headRefName,headRefOid"
+            ),
         )
         try:
             row = json.loads(output or "{}")
@@ -518,28 +625,69 @@ class GitHubClient:
         link.review_decision = str(row.get("reviewDecision") or "").upper() or None
         link.pending_reviewers = _reviewer_names(row.get("reviewRequests"))
         link.approvals = _approval_count(row.get("latestReviews"))
+        link.reviews = _review_details(row.get("latestReviews"), row.get("reviewRequests"))
+        link.last_review_at = max(
+            (review.submitted_at for review in link.reviews if review.submitted_at),
+            default=None,
+        )
         link.checks_pending = _checks_pending(row.get("statusCheckRollup"))
         link.mergeable = str(row.get("mergeable") or "").upper() or None
+        link.merge_state_status = str(row.get("mergeStateStatus") or "").upper() or None
         link.created_at = _parse_datetime(row.get("createdAt"))
         link.updated_at = _parse_datetime(row.get("updatedAt"))
         link.merged_at = _parse_datetime(row.get("mergedAt"))
         link.closed_at = _parse_datetime(row.get("closedAt"))
+        link.changed_files = int(row.get("changedFiles") or 0)
+        link.additions = int(row.get("additions") or 0)
+        link.deletions = int(row.get("deletions") or 0)
+        commits = row.get("commits")
+        link.commit_count = len(commits) if isinstance(commits, list) else 0
+        link.last_commit_at = _last_commit_time(commits)
+        link.top_files = _top_file_paths(row.get("files"))
+        link.base_ref_name = str(row.get("baseRefName") or "") or None
+        link.head_ref_name = str(row.get("headRefName") or "") or None
+        link.head_ref_oid = str(row.get("headRefOid") or "") or None
         if link.is_draft:
             return
+
+        # Pull detailed CI and review-thread data separately. GitHub CLI returns
+        # exit code 8 when checks are still pending, which is a valid data state.
+        try:
+            link.checks = self._load_pr_checks(link)
+        except Exception:
+            # Detailed check data is optional; the status rollup below remains usable.
+            link.checks = []
+        try:
+            link.unresolved_threads = self._load_unresolved_review_threads(link)
+        except Exception:
+            # Review-thread visibility depends on GraphQL permissions and CLI support.
+            link.unresolved_threads = []
+
+        failures = [check for check in link.checks if check.bucket.casefold() == "fail"]
+        if not link.checks:
+            fallback_failures = _failed_checks(row.get("statusCheckRollup"))
+            link.failed_checks = [name for name, _ in fallback_failures]
+        else:
+            link.failed_checks = [check.name for check in failures]
+            link.checks_pending = any(check.bucket.casefold() == "pending" for check in link.checks)
 
         reasons: list[str] = []
         if link.review_decision == "CHANGES_REQUESTED":
             reasons.append("Changes requested")
-
-        failures = _failed_checks(row.get("statusCheckRollup"))
-        if failures:
+        if link.failed_checks:
             reasons.append("Checks failing")
-            link.failed_checks = [name for name, _ in failures]
+        if link.unresolved_threads:
+            reasons.append(
+                f"{len(link.unresolved_threads)} unresolved review "
+                f"{'thread' if len(link.unresolved_threads) == 1 else 'threads'}"
+            )
 
         mergeable = str(row.get("mergeable") or "").upper()
-        merge_state = str(row.get("mergeStateStatus") or "").upper()
+        merge_state = link.merge_state_status or ""
         if mergeable == "CONFLICTING" or merge_state == "DIRTY":
             reasons.append("Merge conflict")
+        elif merge_state == "BEHIND":
+            reasons.append("Branch behind base")
 
         if row.get("mergedAt") or link.state == "MERGED":
             reasons.append("PR merged — update Asana")
@@ -547,6 +695,153 @@ class GitHubClient:
             reasons.append("PR closed — update Asana")
 
         link.action_reasons = reasons
+
+    def _load_pr_checks(self, link: GitHubLink) -> list[GitHubCheckDetail]:
+        output = self._run_allowed(
+            "pr",
+            "checks",
+            str(link.number),
+            "--repo",
+            f"{link.owner}/{link.repo}",
+            "--json",
+            "bucket,completedAt,description,event,link,name,startedAt,state,workflow",
+            allowed_codes={0, 8},
+        )
+        try:
+            rows = json.loads(output or "[]")
+        except json.JSONDecodeError as exc:
+            raise GitHubClientError(f"Could not parse checks for {link.key}: {exc}") from exc
+        if not isinstance(rows, list):
+            return []
+
+        summaries = self._load_check_run_summaries(link) if link.head_ref_oid else {}
+        checks: list[GitHubCheckDetail] = []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            name = str(row.get("name") or "Unnamed check")
+            summary = summaries.get(name, {})
+            checks.append(
+                GitHubCheckDetail(
+                    name=name,
+                    state=str(row.get("state") or "").upper(),
+                    bucket=str(row.get("bucket") or "").lower(),
+                    url=str(row.get("link") or summary.get("url") or "") or None,
+                    description=_plain_excerpt(row.get("description"), 180) or None,
+                    workflow=str(row.get("workflow") or "") or None,
+                    started_at=_parse_datetime(row.get("startedAt")),
+                    completed_at=_parse_datetime(row.get("completedAt")),
+                    summary=_plain_excerpt(summary.get("summary"), 260) or None,
+                )
+            )
+        order = {"fail": 0, "pending": 1, "cancel": 2, "pass": 3, "skipping": 4}
+        return sorted(checks, key=lambda check: (order.get(check.bucket, 5), check.name.casefold()))
+
+    def _load_check_run_summaries(self, link: GitHubLink) -> dict[str, dict[str, str]]:
+        if not link.head_ref_oid:
+            return {}
+        try:
+            output = self._run(
+                "api",
+                "--method",
+                "GET",
+                f"repos/{link.owner}/{link.repo}/commits/{link.head_ref_oid}/check-runs",
+                "-f",
+                "per_page=100",
+            )
+            payload = json.loads(output or "{}")
+        except (GitHubClientError, json.JSONDecodeError):
+            return {}
+        if not isinstance(payload, dict) or not isinstance(payload.get("check_runs"), list):
+            return {}
+        result: dict[str, dict[str, str]] = {}
+        for run in payload["check_runs"]:
+            if not isinstance(run, dict):
+                continue
+            name = str(run.get("name") or "")
+            if not name:
+                continue
+            output_data = run.get("output") or {}
+            title = str(output_data.get("title") or "") if isinstance(output_data, dict) else ""
+            summary = str(output_data.get("summary") or "") if isinstance(output_data, dict) else ""
+            result[name] = {
+                "summary": " — ".join(part for part in (title, summary) if part),
+                "url": str(run.get("html_url") or run.get("details_url") or ""),
+            }
+        return result
+
+    def _load_unresolved_review_threads(self, link: GitHubLink) -> list[GitHubReviewThread]:
+        query = """
+query($owner:String!,$repo:String!,$number:Int!){
+  repository(owner:$owner,name:$repo){
+    pullRequest(number:$number){
+      reviewThreads(first:100){
+        nodes{
+          id isResolved isOutdated path line originalLine
+          comments(first:20){nodes{id author{login} body createdAt url}}
+        }
+      }
+    }
+  }
+}
+""".strip()
+        output = self._run(
+            "api",
+            "graphql",
+            "-f",
+            f"query={query}",
+            "-F",
+            f"owner={link.owner}",
+            "-F",
+            f"repo={link.repo}",
+            "-F",
+            f"number={link.number}",
+        )
+        try:
+            payload = json.loads(output or "{}")
+        except json.JSONDecodeError as exc:
+            raise GitHubClientError(f"Could not parse review threads for {link.key}: {exc}") from exc
+        nodes = (
+            payload.get("data", {})
+            .get("repository", {})
+            .get("pullRequest", {})
+            .get("reviewThreads", {})
+            .get("nodes", [])
+            if isinstance(payload, dict)
+            else []
+        )
+        if not isinstance(nodes, list):
+            return []
+        threads: list[GitHubReviewThread] = []
+        for node in nodes:
+            if not isinstance(node, dict) or bool(node.get("isResolved")) or bool(node.get("isOutdated")):
+                continue
+            comments = node.get("comments") or {}
+            comment_nodes = comments.get("nodes", []) if isinstance(comments, dict) else []
+            if not isinstance(comment_nodes, list) or not comment_nodes:
+                continue
+            first = next((comment for comment in comment_nodes if isinstance(comment, dict)), None)
+            if not first:
+                continue
+            author = first.get("author") or {}
+            threads.append(
+                GitHubReviewThread(
+                    id=str(node.get("id") or first.get("id") or ""),
+                    author=str(author.get("login") or "unknown") if isinstance(author, dict) else "unknown",
+                    body=_plain_excerpt(first.get("body"), 320),
+                    path=str(node.get("path") or ""),
+                    line=int(node.get("line") or node.get("originalLine") or 0) or None,
+                    created_at=_parse_datetime(first.get("createdAt")),
+                    url=str(first.get("url") or "") or None,
+                    is_resolved=False,
+                    is_outdated=False,
+                )
+            )
+        return sorted(
+            threads,
+            key=lambda thread: thread.created_at or datetime.min.replace(tzinfo=timezone.utc),
+            reverse=True,
+        )
 
 
     @staticmethod

@@ -67,6 +67,42 @@ class TaskComment:
 
 
 @dataclass
+class GitHubCheckDetail:
+    name: str
+    state: str
+    bucket: str = ""
+    url: Optional[str] = None
+    description: Optional[str] = None
+    workflow: Optional[str] = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    summary: Optional[str] = None
+
+
+@dataclass
+class GitHubReviewDetail:
+    reviewer: str
+    state: str
+    submitted_at: Optional[datetime] = None
+    body: Optional[str] = None
+    url: Optional[str] = None
+    requested: bool = False
+
+
+@dataclass
+class GitHubReviewThread:
+    id: str
+    author: str
+    body: str
+    path: str
+    line: Optional[int] = None
+    created_at: Optional[datetime] = None
+    url: Optional[str] = None
+    is_resolved: bool = False
+    is_outdated: bool = False
+
+
+@dataclass
 class GitHubLink:
     owner: str
     repo: str
@@ -87,6 +123,20 @@ class GitHubLink:
     updated_at: Optional[datetime] = None
     merged_at: Optional[datetime] = None
     closed_at: Optional[datetime] = None
+    merge_state_status: Optional[str] = None
+    checks: List[GitHubCheckDetail] = field(default_factory=list)
+    reviews: List[GitHubReviewDetail] = field(default_factory=list)
+    unresolved_threads: List[GitHubReviewThread] = field(default_factory=list)
+    changed_files: int = 0
+    additions: int = 0
+    deletions: int = 0
+    commit_count: int = 0
+    top_files: List[str] = field(default_factory=list)
+    base_ref_name: Optional[str] = None
+    head_ref_name: Optional[str] = None
+    head_ref_oid: Optional[str] = None
+    last_commit_at: Optional[datetime] = None
+    last_review_at: Optional[datetime] = None
 
     @property
     def key(self) -> str:
