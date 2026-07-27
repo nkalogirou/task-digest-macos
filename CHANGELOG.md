@@ -4,6 +4,70 @@ All notable changes to Task Digest are documented here.
 
 The project follows semantic versioning for public releases.
 
+## [1.0.19] - 2026-07-27
+
+### Fixed
+
+- Update the PR cockpit rendering test to match the compact merge-readiness label introduced in v1.0.16.
+- Prevent a stale test expectation from reporting a false failure after applying cumulative UI patches.
+
+## [1.0.18] - 2026-07-27
+
+### Changed
+
+- Make the inline priority selector visibly interactive with a persistent Priority label and dropdown chevron.
+- Remove the duplicated priority editor from Actions & notes so priority is changed in one place only.
+- Replace full task cards in Today’s Plan with short, purpose-built plan rows.
+- Limit smart-plan reasons, collapse GitHub state into one compact PR line, and keep full cockpit details in the main work queue.
+- Add View details controls that jump from a plan row to the complete task card.
+
+## [1.0.17] - 2026-07-27
+
+### Added
+
+- Add an accessible priority dropdown directly in every dashboard task-card header.
+- Save manual priority overrides immediately without opening Details & actions.
+- Include an Automatic option that restores computed priority while showing the current effective value.
+
+### Changed
+
+- Style the priority selector as the existing priority tag and reload after changes so sorting, metrics, and Today’s Plan stay consistent.
+
+## [1.0.16] - 2026-07-24
+
+### Changed
+
+- Redesign the GitHub pull-request cockpit with calmer surfaces, semantic merge-gate icons, and clearer blocked, waiting, and ready states.
+- Split pull-request guidance into Your actions and Waiting on so author work is visually distinct from reviewer or CI dependencies.
+- Make cockpit actions directly link to the relevant failed check, unresolved review conversation, or pull request.
+- Keep Today’s Plan lightweight with a compact PR-health strip instead of the complete detailed cockpit.
+- Replace generic Action required labels with the most useful concrete blocker, such as changes requested, failing checks, or an outdated branch.
+- Remove duplicated unread-update badges from task cards.
+
+## [1.0.15] - 2026-07-24
+
+### Added
+
+- Add an in-dashboard pull-request cockpit for Asana-linked GitHub PRs.
+- Show merge gates for CI, reviews, unresolved conversations, and merge conflicts.
+- Derive a deterministic Next actions list from failed checks, review feedback, branch state, and reviewer progress.
+- Display detailed CI states and failure summaries, reviewer progress, unresolved review-thread excerpts, change scope, and recent PR activity.
+- Link directly to individual checks, reviews, and unresolved comments when GitHub provides a URL.
+
+### Changed
+
+- Include detailed GitHub blocker state in snooze-until-change fingerprints and evening change snapshots.
+- Keep detailed PR enrichment best-effort so missing GraphQL/check permissions do not break the dashboard.
+
+## [1.0.14] - 2026-07-24
+
+### Changed
+
+- Clarify installation requirements and what the guided setup changes on macOS.
+- Add separate paths for demo exploration, full local installation, and development.
+- Explain how Task Digest differs from a conventional task list and what it intentionally does not replace.
+- Add a concise public roadmap and improve README navigation and scanability.
+
 ## [1.0.12] - 2026-07-24
 
 ### Added
