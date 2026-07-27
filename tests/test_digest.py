@@ -226,8 +226,8 @@ def test_html_renders_dynamic_buttons_and_linked_pr_alert(tmp_path) -> None:
         dashboard_url="http://127.0.0.1:8765",
     )
     rendered = output.read_text(encoding="utf-8")
-    assert "GitHub action required" in rendered
-    assert "Checks failing" in rendered
+    assert "Merge readiness" in rendered
+    assert "1 failing check" in rendered
     assert "Tomorrow" in rendered
     assert "3 workdays" in rendered
     assert "Until change" in rendered
@@ -289,7 +289,8 @@ def test_html_renders_focus_notes_dependencies_comments_and_theme(tmp_path) -> N
     assert "Release suite" in rendered
     assert "Please cover the empty-state case." in rendered
     assert "Mark 1 update(s) read" in rendered
-    assert "Priority override" in rendered
+    assert rendered.count('name="action" value="set_priority"') >= 1
+    assert "Priority override" not in rendered
     assert "prefers-color-scheme:dark" in rendered
     assert "Drag to reorder" in rendered
     assert "Daily & weekly summaries" in rendered
@@ -322,6 +323,9 @@ def test_html_renders_smart_today_plan_controls(tmp_path) -> None:
     assert "Due today" in rendered
     assert "Review requested from you" in rendered
     assert 'value="accept_smart_plan"' in rendered
+    assert 'class="plan-item priority-urgent"' in rendered
+    assert 'class="pr-cockpit compact' not in rendered
+    assert 'data-plan-open=' in rendered
 
 
 def test_html_renders_collapsed_activity_timeline(tmp_path) -> None:
@@ -400,7 +404,13 @@ def test_task_card_has_scannable_badges_and_collapsed_details(tmp_path) -> None:
         dashboard_url="http://127.0.0.1:8765",
     )
     rendered = output.read_text(encoding="utf-8")
-    assert 'class="priority-pill tone-high">High</span>' in rendered
+    assert 'class="priority-control tone-high" data-priority-form' in rendered
+    assert 'aria-label="Change priority for Improve task cards"' in rendered
+    assert '<option value="" selected>High · Auto</option>' in rendered
+    assert '<span class="priority-control-prefix">Priority</span>' in rendered
+    assert '<span class="priority-control-chevron" aria-hidden="true">⌄</span>' in rendered
+    assert "Priority override" not in rendered
+    assert '<option value="high">High</option>' in rendered
     assert 'class="task-meta"' in rendered
     assert ">In Review</span>" in rendered
     assert ">3 working days</span>" in rendered
@@ -409,6 +419,34 @@ def test_task_card_has_scannable_badges_and_collapsed_details(tmp_path) -> None:
     assert ">2 new</span>" in rendered
     assert "Details &amp; actions" in rendered
     assert "Open in Asana" in rendered
+
+
+def test_priority_dropdown_shows_manual_override_and_automatic_option(tmp_path) -> None:
+    task = _task("asana:priority", "Priority dropdown", priority="urgent")
+    task.manual_priority = "urgent"
+    output = tmp_path / "digest.html"
+    render_html(
+        [task],
+        datetime(2026, 7, 20, 10, 0, tzinfo=timezone.utc),
+        "dashboard",
+        str(output),
+        action_token="secret",
+        dashboard_url="http://127.0.0.1:8765",
+    )
+    rendered = output.read_text(encoding="utf-8")
+    assert 'class="priority-control tone-urgent has-manual"' in rendered
+    assert '<option value="">Urgent · Auto</option>' in rendered
+    assert '<option value="urgent" selected>Urgent</option>' in rendered
+    assert "Priority set to" in rendered
+
+
+def test_static_report_keeps_read_only_priority_pill(tmp_path) -> None:
+    task = _task("asana:static", "Static priority", priority="normal")
+    output = tmp_path / "digest.html"
+    render_html([task], datetime(2026, 7, 20, 10, 0, tzinfo=timezone.utc), "preview", str(output))
+    rendered = output.read_text(encoding="utf-8")
+    assert 'class="priority-pill tone-normal">Normal</span>' in rendered
+    assert '<form method="post"' not in rendered or 'class="priority-control' not in rendered
 
 
 def test_linked_github_row_has_live_status_badges(tmp_path) -> None:
@@ -545,3 +583,39 @@ def test_dashboard_persists_ui_state_across_refreshes(tmp_path) -> None:
     assert "history.scrollRestoration='manual'" in rendered
     assert 'id="reset-dashboard-state"' in rendered
     assert "Reset dashboard view" in rendered
+
+
+def test_priority_editor_is_not_duplicated_inside_actions_panel(tmp_path) -> None:
+    task = _task("asana:inline-priority", "Inline priority only", priority="high")
+    output = tmp_path / "digest.html"
+    render_html(
+        [task],
+        datetime(2026, 7, 20, 10, 0, tzinfo=timezone.utc),
+        "dashboard",
+        str(output),
+        action_token="secret",
+        dashboard_url="http://127.0.0.1:8765",
+    )
+    rendered = output.read_text(encoding="utf-8")
+    assert 'class="priority-control tone-high" data-priority-form' in rendered
+    assert "Priority override" not in rendered
+    assert "Save priority" not in rendered
+
+
+def test_today_plan_uses_short_rows_instead_of_full_task_cards(tmp_path) -> None:
+    task = _task("asana:focused-row", "Compact focused row", status="In Review", priority="urgent")
+    task.focus_rank = 0
+    output = tmp_path / "digest.html"
+    render_html(
+        [task],
+        datetime(2026, 7, 20, 10, 0, tzinfo=timezone.utc),
+        "dashboard",
+        str(output),
+        action_token="secret",
+        dashboard_url="http://127.0.0.1:8765",
+    )
+    rendered = output.read_text(encoding="utf-8")
+    assert 'class="plan-item priority-urgent"' in rendered
+    assert 'class="plan-item-actions"' in rendered
+    assert 'data-plan-open="asana:focused-row"' in rendered
+    assert 'class="task priority-urgent focused compact"' not in rendered

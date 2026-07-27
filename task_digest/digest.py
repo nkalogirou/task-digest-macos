@@ -262,18 +262,52 @@ details[open] > summary::after { transform: rotate(90deg); }
 .plan-actions form { display: inline-flex; }
 .plan-current-head { margin-top: 16px; }
 .plan-current-head h3 { margin: 0; }
-#focus-list { display: grid; gap: 9px; }
+#focus-list { display: grid; gap: 8px; }
 .smart-suggestions { position: relative; z-index: 1; margin-top: 15px; border-top: 1px solid color-mix(in srgb,var(--accent) 16%,var(--border)); padding-top: 13px; }
 .smart-suggestions > summary { cursor: pointer; font-weight: 680; display: flex; justify-content: space-between; gap: 12px; }
 .smart-suggestions > summary span { color: var(--muted); font-size: 11px; }
 .plan-help { color: var(--muted); font-size: 12px; margin: 9px 0; }
-.plan-suggestion-list { display: grid; gap: 10px; }
-.plan-candidate { background: color-mix(in srgb,var(--surface-solid) 88%,transparent); border: 1px solid var(--border); border-radius: 15px; padding: 8px; }
-.plan-candidate .task { box-shadow: none; border: 0; padding: 9px; margin: 0; cursor: default; background: transparent; }
-.plan-reasons { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 4px 9px 8px; }
-.plan-reasons span, .plan-reasons strong { font-size: 10px; background: var(--surface-muted); border: 1px solid var(--border); border-radius: 999px; padding: 5px 8px; }
-.plan-reasons strong { margin-left: auto; color: var(--muted); font-weight: 540; }
-.plan-reasons form { margin-left: 4px; }
+.plan-suggestion-list { display: grid; gap: 8px; }
+.plan-item {
+  --priority-color: var(--border-strong);
+  position: relative;
+  display: grid;
+  gap: 7px;
+  background: color-mix(in srgb,var(--surface-solid) 90%,transparent);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 13px 11px 16px;
+  box-shadow: var(--shadow-sm);
+}
+.plan-item::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 0 3px 3px 0; background: var(--priority-color); }
+.plan-item.priority-urgent { --priority-color: var(--danger); }
+.plan-item.priority-high { --priority-color: #d97706; }
+.plan-item.priority-normal { --priority-color: #ca8a04; }
+.plan-item.priority-new { --priority-color: var(--success); }
+.plan-item.dragging { opacity: .45; }
+.plan-item-main { min-width: 0; display: grid; gap: 6px; }
+.plan-item-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.plan-item h3 { min-width: 0; margin: 0; font-size: 14px; line-height: 1.35; letter-spacing: -.008em; }
+.plan-item h3 a { color: var(--text); }
+.plan-item-meta { display: flex; flex-wrap: wrap; gap: 5px 8px; align-items: center; color: var(--muted); font-size: 10px; }
+.plan-item-meta span + span::before { content: "·"; margin-right: 8px; color: var(--faint); }
+.plan-pr-summary { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 10px; }
+.plan-pr-summary a { max-width: min(620px,100%); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--info); font-weight: 660; }
+.plan-pr-state { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 7px; border: 1px solid var(--border); font-weight: 680; white-space: nowrap; }
+.plan-pr-state.danger { color: var(--danger); background: var(--danger-soft); border-color: color-mix(in srgb,var(--danger) 20%,var(--border)); }
+.plan-pr-state.warning { color: var(--warning); background: var(--warning-soft); border-color: color-mix(in srgb,var(--warning) 20%,var(--border)); }
+.plan-pr-state.success { color: var(--success); background: var(--success-soft); border-color: color-mix(in srgb,var(--success) 20%,var(--border)); }
+.plan-drag { color: var(--faint); cursor: grab; font-size: 16px; letter-spacing: -4px; padding-right: 3px; user-select: none; }
+.plan-item .priority-control { min-width: 86px; }
+.plan-item .priority-control-prefix { display: none; }
+.plan-item .priority-control select { font-size: 9px; padding-block: 4px; }
+.plan-item-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding-top: 6px; border-top: 1px solid color-mix(in srgb,var(--border) 70%,transparent); }
+.plan-item-actions form { display: inline-flex; margin-left: auto; }
+.plan-reasons { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; min-width: 0; }
+.plan-reasons span, .plan-score { font-size: 9px; color: var(--muted); background: var(--surface-muted); border: 1px solid var(--border); border-radius: 999px; padding: 4px 7px; }
+.plan-score { color: var(--faint); }
+.plan-open-button { border: 0; background: transparent; color: var(--accent); padding: 5px 7px; font-size: 10px; font-weight: 680; cursor: pointer; }
+.plan-open-button:hover { text-decoration: underline; }
 .task {
   --priority-color: var(--border-strong);
   position: relative;
@@ -299,7 +333,7 @@ details[open] > summary::after { transform: rotate(90deg); }
 .task h3 { margin: 0; font-size: 16px; line-height: 1.35; letter-spacing: -.012em; }
 .task h3 a { color: var(--text); }
 .task h3 a:hover { color: var(--accent); }
-.priority-pill, .task-flag, .meta-chip {
+.priority-pill, .priority-control, .task-flag, .meta-chip {
   display: inline-flex;
   align-items: center;
   width: fit-content;
@@ -309,6 +343,16 @@ details[open] > summary::after { transform: rotate(90deg); }
   font-weight: 680;
 }
 .priority-pill { flex: 0 0 auto; padding: 5px 9px; font-size: 10px; color: var(--priority-color); background: color-mix(in srgb,var(--priority-color) 10%,var(--surface-muted)); border-color: color-mix(in srgb,var(--priority-color) 24%,var(--border)); }
+.priority-control { position: relative; flex: 0 0 auto; min-width: 126px; min-height: 30px; color: var(--priority-color); background: color-mix(in srgb,var(--priority-color) 10%,var(--surface-muted)); border-color: color-mix(in srgb,var(--priority-color) 28%,var(--border)); transition: border-color .16s ease, background .16s ease, opacity .16s ease; overflow: hidden; }
+.priority-control:hover, .priority-control:focus-within { border-color: color-mix(in srgb,var(--priority-color) 55%,var(--border)); background: color-mix(in srgb,var(--priority-color) 15%,var(--surface-muted)); }
+.priority-control.is-saving { opacity: .62; }
+.priority-control-prefix { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: color-mix(in srgb,currentColor 68%,var(--muted)); font-size: 8px; font-weight: 760; letter-spacing: .04em; text-transform: uppercase; pointer-events: none; }
+.priority-control-chevron { position: absolute; right: 8px; top: 50%; transform: translateY(-54%); color: currentColor; font-size: 11px; pointer-events: none; }
+.priority-control select { width: 100%; min-width: 0; min-height: 28px; appearance: none; -webkit-appearance: none; border: 0; outline: 0; color: currentColor; background: transparent; padding: 13px 24px 3px 9px; font: inherit; font-size: 10px; font-weight: 740; cursor: pointer; }
+.priority-control select:focus-visible { box-shadow: inset 0 0 0 2px color-mix(in srgb,var(--priority-color) 42%,transparent); border-radius: 999px; }
+.priority-control option { color: CanvasText; background: Canvas; }
+.priority-control .priority-manual-dot { position: absolute; left: 5px; top: 5px; width: 4px; height: 4px; border-radius: 50%; background: currentColor; pointer-events: none; }
+.priority-control.has-manual select { padding-left: 13px; }
 .task-flags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
 .task-flag { padding: 4px 8px; font-size: 10px; color: var(--accent); background: var(--accent-soft); border-color: color-mix(in srgb,var(--accent) 22%,var(--border)); }
 .task-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 11px; }
@@ -331,6 +375,58 @@ details[open] > summary::after { transform: rotate(90deg); }
 .pr-alert, .pr-status { margin-top: 9px; padding: 10px 11px; border-radius: 11px; display: flex; flex-direction: column; gap: 3px; font-size: 12px; }
 .pr-alert { background: var(--warning-soft); color: var(--warning); border: 1px solid color-mix(in srgb,var(--warning) 25%,var(--border)); }
 .pr-status { background: var(--info-soft); color: var(--info); border: 1px solid color-mix(in srgb,var(--info) 18%,var(--border)); }
+.pr-cockpit { margin-top: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 14px; background: color-mix(in srgb,var(--surface-muted) 72%,transparent); }
+.pr-cockpit.compact { padding: 9px 10px; }
+.pr-cockpit-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.pr-cockpit-title { display: grid; gap: 3px; min-width: 0; }
+.pr-cockpit-title strong { font-size: 12px; }
+.pr-cockpit-title span { color: var(--muted); font-size: 10px; }
+.pr-cockpit-state { flex: 0 0 auto; padding: 5px 8px; border-radius: 999px; font-size: 9px; font-weight: 760; letter-spacing: .05em; }
+.pr-cockpit-state.blocked { color: var(--danger); background: var(--danger-soft); }
+.pr-cockpit-state.waiting { color: var(--warning); background: var(--warning-soft); }
+.pr-cockpit-state.ready { color: var(--success); background: var(--success-soft); }
+.pr-cockpit-state.merged { color: var(--info); background: var(--info-soft); }
+.pr-progress { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 7px; margin-top: 10px; }
+.pr-gate { min-width: 0; padding: 8px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.pr-gate strong { display: block; font-size: 10px; }
+.pr-gate span { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; line-height: 1.35; }
+.pr-gate.ready { border-color: color-mix(in srgb,var(--success) 28%,var(--border)); }
+.pr-gate.blocked { border-color: color-mix(in srgb,var(--danger) 30%,var(--border)); }
+.pr-gate.waiting { border-color: color-mix(in srgb,var(--warning) 30%,var(--border)); }
+.pr-gate.neutral { border-color: color-mix(in srgb,var(--info) 22%,var(--border)); }
+.pr-gate-meter { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 10px; }
+.pr-gate-track { flex: 1; height: 6px; overflow: hidden; border-radius: 999px; background: var(--border); }
+.pr-gate-fill { height: 100%; border-radius: inherit; background: var(--accent); }
+.pr-next { margin-top: 10px; padding: 9px 10px; border-radius: 10px; background: var(--accent-soft); border: 1px solid color-mix(in srgb,var(--accent) 20%,var(--border)); }
+.pr-next strong { display: block; color: var(--accent); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
+.pr-next ol { margin: 6px 0 0; padding-left: 18px; color: var(--text); font-size: 11px; line-height: 1.55; }
+.pr-details { margin-top: 9px; border-top: 1px solid var(--border); padding-top: 8px; }
+.pr-details > summary { cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 10px; font-weight: 680; }
+.pr-details > summary::-webkit-details-marker { display: none; }
+.pr-details > summary::after { content: "›"; font-size: 16px; transition: transform .16s ease; }
+.pr-details[open] > summary::after { transform: rotate(90deg); }
+.pr-detail-body { margin-top: 8px; display: grid; gap: 8px; }
+.pr-check, .pr-review, .pr-thread, .pr-scope-row, .pr-activity-row { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 8px; align-items: start; padding: 8px 9px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.pr-check-icon, .pr-review-icon { font-size: 12px; line-height: 1.3; }
+.pr-detail-main { min-width: 0; }
+.pr-detail-main strong { display: block; font-size: 11px; overflow-wrap: anywhere; }
+.pr-detail-main p { margin: 3px 0 0!important; color: var(--muted)!important; font-size: 10px!important; line-height: 1.45; }
+.pr-detail-meta { color: var(--muted); font-size: 9px; white-space: nowrap; }
+.pr-detail-link { color: var(--info); font-size: 9px; font-weight: 680; white-space: nowrap; }
+.pr-thread { grid-template-columns: minmax(0,1fr) auto; }
+.pr-thread-location { color: var(--info); font-size: 10px; font-weight: 680; overflow-wrap: anywhere; }
+.pr-thread blockquote { margin: 6px 0 0; padding-left: 9px; border-left: 2px solid var(--border); color: var(--text); font-size: 10px; line-height: 1.5; }
+.pr-scope-summary { display: flex; flex-wrap: wrap; gap: 6px; }
+.pr-file-list { margin: 0; padding-left: 18px; color: var(--muted); font-size: 10px; line-height: 1.55; }
+.pr-activity { display: grid; gap: 6px; }
+.pr-activity-row { grid-template-columns: minmax(0,1fr) auto; }
+@media (max-width: 760px) {
+  .pr-progress { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .pr-gate-meter { grid-column: 1 / -1; }
+  .pr-next-grid { grid-template-columns: 1fr; }
+  .pr-cockpit.compact { grid-template-columns: 31px minmax(0,1fr); }
+  .pr-compact-status { grid-column: 2; justify-items: start; grid-auto-flow: column; align-items: center; }
+}
 .task-quick-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .task-quick-link { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11px; font-weight: 650; }
 .task-quick-link:hover { color: var(--accent); }
@@ -406,6 +502,193 @@ select, textarea, input[type=date] { width: 100%; border: 1px solid var(--border
 .reset-view { border: 0; padding: 3px 7px; border-radius: 7px; background: transparent; color: var(--muted); font-size: 10px; font-weight: 650; box-shadow: none; }
 .reset-view:hover { color: var(--accent); background: var(--accent-soft); transform: none; box-shadow: none; }
 .hidden-by-filter { display: none!important; }
+
+/* Pull-request cockpit visual hierarchy */
+.pr-cockpit {
+  position: relative;
+  overflow: hidden;
+  padding: 15px;
+  border-color: color-mix(in srgb,var(--border) 76%,var(--accent));
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb,var(--accent) 7%,transparent), transparent 35%),
+    color-mix(in srgb,var(--surface-muted) 82%,var(--surface));
+  box-shadow: inset 0 1px 0 color-mix(in srgb,var(--text) 5%,transparent);
+}
+.pr-cockpit::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--info);
+}
+.pr-cockpit.blocked::before { background: var(--danger); }
+.pr-cockpit.waiting::before { background: var(--warning); }
+.pr-cockpit.ready::before { background: var(--success); }
+.pr-cockpit.merged::before { background: var(--info); }
+.pr-cockpit-head { align-items: center; }
+.pr-cockpit-title { gap: 2px; }
+.pr-eyebrow {
+  color: var(--muted)!important;
+  font-size: 9px!important;
+  font-weight: 760;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+.pr-cockpit-title strong { font-size: 14px; letter-spacing: -.01em; }
+.pr-cockpit-title > span:last-child { font-size: 11px; line-height: 1.45; }
+.pr-cockpit-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 9px;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+.pr-cockpit-state > span {
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: color-mix(in srgb,currentColor 12%,transparent);
+  font-size: 9px;
+}
+.pr-progress { gap: 8px; margin-top: 13px; }
+.pr-gate {
+  display: grid;
+  grid-template-columns: 25px minmax(0,1fr);
+  gap: 8px;
+  align-items: center;
+  min-height: 55px;
+  padding: 9px 10px;
+  border-color: transparent;
+  background: color-mix(in srgb,var(--surface) 82%,transparent);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.pr-gate.ready { box-shadow: inset 0 0 0 1px color-mix(in srgb,var(--success) 30%,var(--border)); }
+.pr-gate.blocked { box-shadow: inset 0 0 0 1px color-mix(in srgb,var(--danger) 34%,var(--border)); }
+.pr-gate.waiting { box-shadow: inset 0 0 0 1px color-mix(in srgb,var(--warning) 34%,var(--border)); }
+.pr-gate.neutral { box-shadow: inset 0 0 0 1px color-mix(in srgb,var(--info) 24%,var(--border)); }
+.pr-gate-icon {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 8px;
+  color: var(--info);
+  background: var(--info-soft);
+  font-size: 11px;
+  font-weight: 800;
+}
+.pr-gate.ready .pr-gate-icon { color: var(--success); background: var(--success-soft); }
+.pr-gate.blocked .pr-gate-icon { color: var(--danger); background: var(--danger-soft); }
+.pr-gate.waiting .pr-gate-icon { color: var(--warning); background: var(--warning-soft); }
+.pr-gate strong { font-size: 11px; }
+.pr-gate span:not(.pr-gate-icon) { margin-top: 2px; font-size: 10px; }
+.pr-gate-meter { margin-top: 1px; }
+.pr-gate-meter strong { color: var(--text); }
+.pr-gate-track { height: 5px; background: color-mix(in srgb,var(--border) 78%,transparent); }
+.pr-gate-fill { background: var(--accent); transition: width .25s ease; }
+.pr-gate-fill.blocked { background: var(--danger); }
+.pr-gate-fill.waiting { background: var(--warning); }
+.pr-gate-fill.ready { background: var(--success); }
+.pr-gate-fill.merged { background: var(--info); }
+.pr-next-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 9px;
+  margin-top: 11px;
+}
+.pr-next-group {
+  padding: 11px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb,var(--surface) 88%,transparent);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.pr-next-group.action { box-shadow: inset 3px 0 0 var(--danger), inset 0 0 0 1px var(--border); }
+.pr-next-group.waiting { box-shadow: inset 3px 0 0 var(--warning), inset 0 0 0 1px var(--border); }
+.pr-next-group > strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 780;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.pr-next-group ul { display: grid; gap: 5px; margin: 0; padding: 0; list-style: none; }
+.pr-next-group li { display: flex; align-items: baseline; justify-content: space-between; gap: 9px; font-size: 11px; line-height: 1.4; }
+.pr-next-group li span { min-width: 0; }
+.pr-next-group li a { flex: 0 0 auto; color: var(--info); font-size: 9px; font-weight: 700; }
+.pr-detail-list { margin-top: 12px; border-top: 1px solid var(--border); }
+.pr-details { margin: 0; padding: 0; border-top: 0; }
+.pr-details + .pr-details { border-top: 1px solid color-mix(in srgb,var(--border) 72%,transparent); }
+.pr-details > summary { min-height: 40px; padding: 9px 1px; color: var(--text); font-size: 11px; }
+.pr-details > summary::after { margin-left: 4px; color: var(--faint); }
+.pr-detail-count {
+  margin-left: auto;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  background: var(--surface-muted);
+  font-size: 9px;
+  font-weight: 680;
+}
+.pr-detail-body { margin: 0 0 9px; }
+.pr-check, .pr-review, .pr-thread, .pr-scope-row, .pr-activity-row {
+  border-color: transparent;
+  background: color-mix(in srgb,var(--surface) 82%,transparent);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.pr-cockpit.compact {
+  display: grid;
+  grid-template-columns: 31px minmax(0,1fr) auto;
+  gap: 10px;
+  align-items: center;
+  margin-top: 9px;
+  padding: 10px 11px;
+  border: 0;
+  border-radius: 12px;
+  background: color-mix(in srgb,var(--surface-muted) 75%,transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb,var(--border) 82%,transparent);
+}
+.pr-cockpit.compact::before { display: none; }
+.pr-compact-icon {
+  display: grid;
+  place-items: center;
+  width: 31px;
+  height: 31px;
+  border-radius: 10px;
+  color: var(--info);
+  background: var(--info-soft);
+  font-size: 13px;
+  font-weight: 800;
+}
+.pr-compact-icon.blocked { color: var(--danger); background: var(--danger-soft); }
+.pr-compact-icon.waiting { color: var(--warning); background: var(--warning-soft); }
+.pr-compact-icon.ready { color: var(--success); background: var(--success-soft); }
+.pr-compact-copy { min-width: 0; display: grid; gap: 2px; }
+.pr-compact-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.pr-compact-copy span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 10px; }
+.pr-compact-status { display: grid; justify-items: end; gap: 5px; color: var(--muted); font-size: 9px; font-weight: 650; }
+.pr-compact-dots { display: flex; gap: 4px; }
+.pr-compact-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--info); }
+.pr-compact-dot.ready { background: var(--success); }
+.pr-compact-dot.blocked { background: var(--danger); }
+.pr-compact-dot.waiting { background: var(--warning); }
+.pr-compact-dot.neutral { background: var(--faint); }
+.task.compact {
+  padding: 14px 15px 13px 19px;
+  border-radius: 15px;
+  box-shadow: none;
+  background: color-mix(in srgb,var(--surface-raised) 94%,var(--accent-soft));
+}
+.task.compact:hover { transform: none; box-shadow: none; }
+.task.compact .task-meta { margin-top: 8px; }
+.task.compact .github-list { margin-top: 9px; }
+.task.compact .github-item { min-height: 34px; padding: 7px 9px; border-radius: 10px; }
+.task.compact .github-item-label { font-size: 10px; }
 footer { margin-top: 28px; padding: 18px 0; color: var(--muted); font-size: 11px; line-height: 1.55; border-top: 1px solid var(--border); }
 @media (max-width: 1240px) {
   .dashboard-workspace { grid-template-columns: 1fr; }
@@ -422,7 +705,9 @@ footer { margin-top: 28px; padding: 18px 0; color: var(--muted); font-size: 11px
   .section-head { align-items: flex-start; flex-direction: column; }
   .plan-actions { justify-content: flex-start; }
   .task-head { align-items: flex-start; }
-  .priority-pill { margin-top: 1px; }
+  .priority-pill, .priority-control { margin-top: 1px; }
+  .plan-item-title-row { align-items: flex-start; }
+  .plan-item-actions form { margin-left: 0; }
   .github-item { grid-template-columns: minmax(0,1fr) auto; }
   .github-item-badges { grid-column: 1 / -1; }
   .dashboard-secondary { grid-template-columns: 1fr; }
@@ -819,11 +1104,6 @@ def _task_controls(item: TaskItem) -> str:
     token = escape(_ACTION_TOKEN, quote=True)
     key = escape(item.key, quote=True)
     focus_label = "Remove from focus" if item.is_focused else "Add to focus"
-    selected = item.manual_priority or ""
-    options = ['<option value="">Automatic priority</option>'] + [
-        f'<option value="{value}"{(" selected" if selected == value else "")}>{label}</option>'
-        for value, label in (("urgent", "Urgent"), ("high", "High"), ("normal", "Normal"), ("new", "New"))
-    ]
     note = escape(item.local_note)
     mark_read = _post_form("mark_read", item.key, f"Mark {item.unread_updates} update(s) read") if item.unread_updates else ""
     return f'''
@@ -838,13 +1118,6 @@ def _task_controls(item: TaskItem) -> str:
       {_post_form("ignore", item.key, "Ignore", "danger")}
       {mark_read}
     </div>
-    <form method="post" action="{action_url}" class="inline-editor">
-      <input type="hidden" name="token" value="{token}">
-      <input type="hidden" name="key" value="{key}">
-      <input type="hidden" name="action" value="set_priority">
-      <label>Priority override<select name="priority">{''.join(options)}</select></label>
-      <button type="submit">Save priority</button>
-    </form>
     <form method="post" action="{action_url}" class="note-editor">
       <input type="hidden" name="token" value="{token}">
       <input type="hidden" name="key" value="{key}">
@@ -1086,21 +1359,371 @@ def _task_search_attributes(item: TaskItem, today: date) -> str:
     }
     return " ".join(f'{name}="{escape(value, quote=True)}"' for name, value in values.items())
 
+def _duration_label(start: datetime | None, end: datetime | None) -> str:
+    if not start or not end:
+        return ""
+    seconds = max(0, int((end - start).total_seconds()))
+    if seconds < 60:
+        return f"{seconds}s"
+    minutes = seconds // 60
+    if minutes < 60:
+        return f"{minutes}m"
+    hours, remainder = divmod(minutes, 60)
+    return f"{hours}h {remainder}m" if remainder else f"{hours}h"
+
+
+def _timestamp_label(value: datetime | None) -> str:
+    if not value:
+        return "Unknown"
+    local = value.astimezone() if value.tzinfo else value
+    return local.strftime("%a %d %b · %H:%M")
+
+
+def _pr_gate_data(link: Any) -> list[tuple[str, str, str, bool]]:
+    failed = sum(1 for check in link.checks if check.bucket == "fail")
+    pending = sum(1 for check in link.checks if check.bucket == "pending")
+    passed = sum(1 for check in link.checks if check.bucket == "pass")
+    if failed:
+        checks = ("Checks", f"{failed} failing · {passed} passed", "blocked", False)
+    elif pending or link.checks_pending:
+        checks = ("Checks", f"{pending or 1} running · {passed} passed", "waiting", False)
+    elif link.checks:
+        checks = ("Checks", f"{passed} passed", "ready", True)
+    else:
+        checks = ("Checks", "No checks reported", "neutral", True)
+
+    if link.review_decision == "CHANGES_REQUESTED":
+        reviews = ("Reviews", "Changes requested", "blocked", False)
+    elif link.review_decision == "APPROVED":
+        reviews = ("Reviews", f"{link.approvals or 1} approved", "ready", True)
+    elif link.pending_reviewers:
+        reviews = ("Reviews", f"{len(link.pending_reviewers)} pending", "waiting", False)
+    else:
+        reviews = ("Reviews", "Review required", "waiting", False)
+
+    unresolved = len(link.unresolved_threads)
+    conversations = (
+        "Conversations",
+        "All resolved" if unresolved == 0 else f"{unresolved} unresolved",
+        "ready" if unresolved == 0 else "blocked",
+        unresolved == 0,
+    )
+
+    if link.mergeable == "CONFLICTING" or link.merge_state_status == "DIRTY":
+        merge = ("Merge", "Conflicts", "blocked", False)
+    elif link.merge_state_status == "BEHIND":
+        merge = ("Merge", "Behind base", "waiting", False)
+    elif link.mergeable == "MERGEABLE":
+        merge = ("Merge", "No conflicts", "ready", True)
+    else:
+        merge = ("Merge", "Calculating", "neutral", False)
+    return [checks, reviews, conversations, merge]
+
+
+def _pr_primary_issue(link: Any) -> str:
+    if link.failed_checks:
+        count = len(link.failed_checks)
+        return f"{count} failing check{'s' if count != 1 else ''}"
+    if link.review_decision == "CHANGES_REQUESTED":
+        return "Changes requested"
+    if link.unresolved_threads:
+        count = len(link.unresolved_threads)
+        return f"{count} unresolved conversation{'s' if count != 1 else ''}"
+    if link.mergeable == "CONFLICTING" or link.merge_state_status == "DIRTY":
+        return "Merge conflicts"
+    if link.merge_state_status == "BEHIND":
+        return f"Branch behind {link.base_ref_name or 'base'}"
+    if link.checks_pending:
+        return "Checks running"
+    if link.pending_reviewers:
+        count = len(link.pending_reviewers)
+        return f"{count} review{'s' if count != 1 else ''} pending"
+    if link.review_decision == "APPROVED" and link.mergeable == "MERGEABLE":
+        return "Ready to merge"
+    return "Pull request status"
+
+
+def _pr_summary_parts(link: Any) -> list[str]:
+    parts: list[str] = []
+    if link.failed_checks:
+        count = len(link.failed_checks)
+        parts.append(f"{count} check{'s' if count != 1 else ''} failing")
+    if link.review_decision == "CHANGES_REQUESTED":
+        parts.append("Changes requested")
+    unresolved = len(link.unresolved_threads)
+    if unresolved:
+        parts.append(f"{unresolved} unresolved conversation{'s' if unresolved != 1 else ''}")
+    if link.mergeable == "CONFLICTING" or link.merge_state_status == "DIRTY":
+        parts.append("Merge conflicts")
+    elif link.merge_state_status == "BEHIND":
+        parts.append(f"Branch behind {link.base_ref_name or 'base'}")
+    if not parts and link.checks_pending:
+        parts.append("Checks running")
+    if not parts and link.pending_reviewers:
+        count = len(link.pending_reviewers)
+        parts.append(f"{count} review{'s' if count != 1 else ''} pending")
+    if not parts and link.review_decision == "APPROVED" and link.mergeable == "MERGEABLE":
+        parts.append("All merge gates ready")
+    return parts
+
+
+def _pr_action_groups(link: Any) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+    your_actions: list[tuple[str, str]] = []
+    waiting: list[tuple[str, str]] = []
+    if link.failed_checks:
+        names = ", ".join(link.failed_checks[:3])
+        if len(link.failed_checks) > 3:
+            names += f" +{len(link.failed_checks) - 3} more"
+        failed_url = next((check.url for check in link.checks if check.bucket == "fail" and check.url), link.url)
+        your_actions.append((f"Fix failed checks: {names}", failed_url))
+    if link.unresolved_threads:
+        count = len(link.unresolved_threads)
+        thread_url = next((thread.url for thread in link.unresolved_threads if thread.url), link.url)
+        your_actions.append((f"Address {count} unresolved review {'thread' if count == 1 else 'threads'}", thread_url))
+    if link.mergeable == "CONFLICTING" or link.merge_state_status == "DIRTY":
+        your_actions.append(("Resolve merge conflicts with the base branch", link.url))
+    elif link.merge_state_status == "BEHIND":
+        your_actions.append((f"Update the branch from {link.base_ref_name or 'the base branch'}", link.url))
+    if link.review_decision == "CHANGES_REQUESTED":
+        your_actions.append(("Push updates and re-request review", link.url))
+    if link.pending_reviewers:
+        reviewers = ", ".join("@" + name for name in link.pending_reviewers[:4])
+        waiting.append((f"Review from {reviewers}", link.url))
+    if link.checks_pending and not link.failed_checks:
+        waiting.append(("Continuous integration to finish", link.url))
+    if link.state == "MERGED" or link.merged_at:
+        your_actions.append(("Update or complete the linked Asana task", link.url))
+    elif link.state == "CLOSED" or link.closed_at:
+        your_actions.append(("Confirm whether the linked Asana task should remain open", link.url))
+    if not your_actions and not waiting and link.review_decision == "APPROVED" and link.mergeable == "MERGEABLE":
+        waiting.append(("Ready to merge", link.url))
+    return your_actions, waiting
+
+
+def _check_detail_html(check: Any) -> str:
+    bucket = str(check.bucket or "").casefold()
+    icon = {"pass": "✓", "fail": "✕", "pending": "…", "cancel": "–", "skipping": "↷"}.get(bucket, "•")
+    detail = check.summary or check.description or (check.workflow and f"Workflow: {check.workflow}") or ""
+    duration = _duration_label(check.started_at, check.completed_at)
+    meta = " · ".join(part for part in (str(check.state or "").replace("_", " ").title(), duration) if part)
+    link_html = f'<a class="pr-detail-link" href="{escape(check.url, quote=True)}">Open check ↗</a>' if check.url else ""
+    return (
+        f'<div class="pr-check"><span class="pr-check-icon" aria-hidden="true">{icon}</span>'
+        f'<div class="pr-detail-main"><strong>{escape(check.name)}</strong>'
+        f'{f"<p>{escape(detail)}</p>" if detail else ""}</div>'
+        f'<div>{f"<div class=\"pr-detail-meta\">{escape(meta)}</div>" if meta else ""}{link_html}</div></div>'
+    )
+
+
+def _review_detail_html(review: Any) -> str:
+    state = str(review.state or "PENDING").upper()
+    icon = {"APPROVED": "✓", "CHANGES_REQUESTED": "✕", "PENDING": "…", "COMMENTED": "💬", "DISMISSED": "–"}.get(state, "•")
+    label = state.replace("_", " ").title()
+    if review.requested and state != "PENDING":
+        label += " · re-review pending"
+    elif review.requested:
+        label = "Review pending"
+    body = f'<p>{escape(review.body)}</p>' if review.body else ""
+    link_html = f'<a class="pr-detail-link" href="{escape(review.url, quote=True)}">Open review ↗</a>' if review.url else ""
+    return (
+        f'<div class="pr-review"><span class="pr-review-icon" aria-hidden="true">{icon}</span>'
+        f'<div class="pr-detail-main"><strong>@{escape(review.reviewer)} · {escape(label)}</strong>{body}</div>'
+        f'<div><div class="pr-detail-meta">{escape(_timestamp_label(review.submitted_at)) if review.submitted_at else ""}</div>{link_html}</div></div>'
+    )
+
+
+def _thread_detail_html(thread: Any) -> str:
+    location = thread.path + (f":{thread.line}" if thread.line else "")
+    link_html = f'<a class="pr-detail-link" href="{escape(thread.url, quote=True)}">Open comment ↗</a>' if thread.url else ""
+    return (
+        '<div class="pr-thread"><div>'
+        f'<div class="pr-thread-location">{escape(location)}</div>'
+        f'<div class="pr-detail-meta">@{escape(thread.author)} · {escape(_timestamp_label(thread.created_at))}</div>'
+        f'<blockquote>{escape(thread.body)}</blockquote></div>{link_html}</div>'
+    )
+
+
+def _github_cockpit_html(link: Any, *, compact: bool = False) -> str:
+    has_data = any((
+        link.state,
+        link.review_decision,
+        link.checks,
+        link.reviews,
+        link.unresolved_threads,
+        link.action_reasons,
+        link.changed_files,
+        link.commit_count,
+    ))
+    if not has_data:
+        return ""
+
+    gates = _pr_gate_data(link)
+    ready = sum(1 for _, _, _, is_ready in gates if is_ready)
+    if link.state == "MERGED" or link.merged_at:
+        state_label, state_tone, state_icon = "Merged", "merged", "✓"
+    elif link.state == "CLOSED" or link.closed_at:
+        state_label, state_tone, state_icon = "Closed", "blocked", "×"
+    elif link.action_reasons:
+        state_label, state_tone, state_icon = "Blocked", "blocked", "!"
+    elif link.checks_pending or link.pending_reviewers:
+        state_label, state_tone, state_icon = "Waiting", "waiting", "…"
+    else:
+        state_label, state_tone, state_icon = "Ready", "ready", "✓"
+
+    percent = int(ready / len(gates) * 100)
+    meter = (
+        '<div class="pr-gate-meter">'
+        f'<span><strong>{ready}/{len(gates)}</strong> merge gates ready</span>'
+        '<span class="pr-gate-track" aria-hidden="true">'
+        f'<span class="pr-gate-fill {state_tone}" style="width:{percent}%"></span></span></div>'
+    )
+    summary_parts = _pr_summary_parts(link)
+    summary = " · ".join(summary_parts) or "Status is up to date"
+
+    if compact:
+        dots = "".join(
+            f'<span class="pr-compact-dot {tone}" title="{escape(label + ": " + detail, quote=True)}"></span>'
+            for label, detail, tone, _ in gates
+        )
+        return (
+            f'<div class="pr-cockpit compact {state_tone}">'
+            f'<span class="pr-compact-icon {state_tone}" aria-hidden="true">{state_icon}</span>'
+            '<div class="pr-compact-copy">'
+            f'<strong>{escape(_pr_primary_issue(link))}</strong><span>{escape(summary)}</span></div>'
+            f'<div class="pr-compact-status"><span>{ready}/{len(gates)} ready</span><span class="pr-compact-dots">{dots}</span></div>'
+            '</div>'
+        )
+
+    head = (
+        '<div class="pr-cockpit-head"><div class="pr-cockpit-title">'
+        '<span class="pr-eyebrow">Pull request health</span>'
+        f'<strong>Merge readiness</strong><span>{escape(summary)}</span>'
+        f'</div><span class="pr-cockpit-state {state_tone}"><span aria-hidden="true">{state_icon}</span>{state_label}</span></div>'
+    )
+
+    gate_icons = {"ready": "✓", "blocked": "!", "waiting": "…", "neutral": "•"}
+    gate_html = "".join(
+        f'<div class="pr-gate {tone}"><span class="pr-gate-icon" aria-hidden="true">{gate_icons.get(tone, "•")}</span>'
+        f'<div><strong>{escape(label)}</strong><span>{escape(detail)}</span></div></div>'
+        for label, detail, tone, _ in gates
+    )
+
+    your_actions, waiting_actions = _pr_action_groups(link)
+    groups: list[str] = []
+    if your_actions:
+        rows = "".join(
+            f'<li><span>{escape(label)}</span><a href="{escape(url, quote=True)}">Open ↗</a></li>'
+            for label, url in your_actions
+        )
+        groups.append(f'<div class="pr-next-group action"><strong>Your actions</strong><ul>{rows}</ul></div>')
+    if waiting_actions:
+        rows = "".join(
+            f'<li><span>{escape(label)}</span><a href="{escape(url, quote=True)}">View ↗</a></li>'
+            for label, url in waiting_actions
+        )
+        groups.append(f'<div class="pr-next-group waiting"><strong>Waiting on</strong><ul>{rows}</ul></div>')
+    next_html = f'<div class="pr-next-grid">{"".join(groups)}</div>' if groups else ""
+
+    check_rows = "".join(_check_detail_html(check) for check in link.checks)
+    checks = (
+        '<details class="pr-details"><summary><span>Checks</span>'
+        f'<span class="pr-detail-count">{len(link.checks)}</span></summary><div class="pr-detail-body">'
+        f'{check_rows or "<p class=\"subtle\">No detailed checks were reported.</p>"}</div></details>'
+    )
+    review_rows = "".join(_review_detail_html(review) for review in link.reviews)
+    reviews = (
+        '<details class="pr-details"><summary><span>Review progress</span>'
+        f'<span class="pr-detail-count">{len(link.reviews)}</span></summary><div class="pr-detail-body">'
+        f'{review_rows or "<p class=\"subtle\">No reviewer activity was reported.</p>"}</div></details>'
+    )
+    thread_rows = "".join(_thread_detail_html(thread) for thread in link.unresolved_threads[:8])
+    more_threads = len(link.unresolved_threads) - 8
+    if more_threads > 0:
+        thread_rows += f'<p class="subtle">Plus {more_threads} more unresolved thread(s).</p>'
+    threads = (
+        '<details class="pr-details"><summary><span>Unresolved feedback</span>'
+        f'<span class="pr-detail-count">{len(link.unresolved_threads)}</span></summary><div class="pr-detail-body">'
+        f'{thread_rows or "<p class=\"subtle\">All review conversations are resolved.</p>"}</div></details>'
+    )
+
+    scope_chips = "".join((
+        _meta_chip(f"{link.changed_files} files", "info"),
+        _meta_chip(f"+{link.additions}", "success"),
+        _meta_chip(f"−{link.deletions}", "danger"),
+        _meta_chip(f"{link.commit_count} commits", "neutral"),
+    ))
+    file_list = "".join(f'<li>{escape(path)}</li>' for path in link.top_files)
+    scope = (
+        '<details class="pr-details"><summary><span>Change scope</span><span class="pr-detail-count">'
+        f'{link.changed_files}</span></summary><div class="pr-detail-body">'
+        f'<div class="pr-scope-summary">{scope_chips}</div>'
+        f'{f"<ul class=\"pr-file-list\">{file_list}</ul>" if file_list else ""}</div></details>'
+    )
+
+    activity_rows = []
+    if link.last_commit_at:
+        activity_rows.append(("Last push", _timestamp_label(link.last_commit_at)))
+    if link.last_review_at:
+        activity_rows.append(("Last reviewer activity", _timestamp_label(link.last_review_at)))
+    if link.updated_at:
+        activity_rows.append(("PR updated", _timestamp_label(link.updated_at)))
+    activity = (
+        '<details class="pr-details"><summary><span>PR activity</span>'
+        f'<span class="pr-detail-count">{len(activity_rows)}</span></summary><div class="pr-detail-body pr-activity">'
+        + "".join(
+            f'<div class="pr-activity-row"><strong>{escape(label)}</strong><span class="pr-detail-meta">{escape(value)}</span></div>'
+            for label, value in activity_rows
+        )
+        + "</div></details>"
+    ) if activity_rows else ""
+
+    return (
+        f'<section class="pr-cockpit {state_tone}">{head}<div class="pr-progress">{gate_html}{meter}</div>'
+        f'{next_html}<div class="pr-detail-list">{checks}{reviews}{threads}{scope}{activity}</div></section>'
+    )
+
+
+def _priority_control(item: TaskItem, *, compact: bool = False) -> str:
+    """Render a clearly interactive priority selector in live dashboards."""
+    if not _ACTION_TOKEN or not _DASHBOARD_URL:
+        return f'<span class="priority-pill tone-{item.priority}">{escape(item.priority.title())}</span>'
+
+    selected = item.manual_priority or ""
+    automatic_label = f"{item.priority.title()} · Auto"
+    choices = [("", automatic_label), ("urgent", "Urgent"), ("high", "High"), ("normal", "Normal"), ("new", "New")]
+    options = "".join(
+        f'<option value="{value}"{(" selected" if selected == value else "")}>{escape(label)}</option>'
+        for value, label in choices
+    )
+    manual_class = " has-manual" if item.manual_priority else ""
+    compact_class = " compact-priority" if compact else ""
+    manual_dot = '<span class="priority-manual-dot" aria-hidden="true"></span>' if item.manual_priority else ""
+    label = f"Change priority for {item.title}"
+    return (
+        f'<form method="post" action="{escape(_DASHBOARD_URL + "/action", quote=True)}" '
+        f'class="priority-control tone-{item.priority}{manual_class}{compact_class}" data-priority-form draggable="false" '
+        f'title="{escape(label, quote=True)}">'
+        f'<input type="hidden" name="token" value="{escape(_ACTION_TOKEN, quote=True)}">'
+        f'<input type="hidden" name="key" value="{escape(item.key, quote=True)}">'
+        '<input type="hidden" name="action" value="set_priority">'
+        f'{manual_dot}<span class="priority-control-prefix">Priority</span>'
+        f'<select name="priority" aria-label="{escape(label, quote=True)}" '
+        f'data-effective-priority="{escape(item.priority, quote=True)}" draggable="false">{options}</select>'
+        '<span class="priority-control-chevron" aria-hidden="true">⌄</span>'
+        '</form>'
+    )
+
 def _task_card(item: TaskItem, today: date, badge: str | None = None, compact: bool = False) -> str:
     title = escape(item.title)
     if item.url:
         title = f'<a href="{escape(item.url, quote=True)}">{title}</a>'
 
     github_rows: list[str] = []
-    alerts: list[str] = []
+    cockpit_rows: list[str] = []
     for link in _visible_github_links(item):
         state_badges: list[str] = []
         if link.action_reasons:
-            state_badges.append(_meta_chip("Action required", "danger"))
-            alerts.append(
-                '<div class="pr-alert"><strong>GitHub action required</strong>'
-                f'<span>{escape(" · ".join(link.action_reasons))}</span></div>'
-            )
+            state_badges.append(_meta_chip(_pr_primary_issue(link), "danger"))
         else:
             if link.pending_reviewers:
                 state_badges.append(_meta_chip(f"{len(link.pending_reviewers)} review pending", "warning"))
@@ -1114,14 +1737,14 @@ def _task_card(item: TaskItem, today: date, badge: str | None = None, compact: b
             f'<span class="github-item-badges">{"".join(state_badges)}</span>'
             '<span class="github-item-arrow" aria-hidden="true">↗</span></a>'
         )
+        cockpit = _github_cockpit_html(link, compact=compact)
+        if cockpit:
+            cockpit_rows.append(cockpit)
 
     badge_value = badge or ("Follow-up suggested" if item.stale_waiting else None)
-    if item.unread_updates and not badge_value:
-        badge_value = f"{item.unread_updates} new update(s)"
     if item.rule_matches and not badge_value:
         badge_value = f"Rule: {item.rule_matches[-1]}"
 
-    priority_label = item.priority.title()
     flags = f'<span class="task-flag">{escape(badge_value)}</span>' if badge_value else ""
     note_html = f'<p class="local-note"><strong>Private note</strong><span>{escape(item.local_note)}</span></p>' if item.local_note else ""
     focused = " focused" if item.is_focused else ""
@@ -1135,11 +1758,11 @@ def _task_card(item: TaskItem, today: date, badge: str | None = None, compact: b
         f'data-group="{group}" data-title="{escape(item.title.casefold(), quote=True)}" {search_attributes}{draggable}>'
         '<div class="task-head">'
         f'<div class="task-title-wrap"><h3>{title}</h3><div class="task-flags">{flags}</div></div>'
-        f'<span class="priority-pill tone-{item.priority}">{escape(priority_label)}</span></div>'
+        f'{_priority_control(item)}</div>'
         f'{_task_meta_html(item, today)}{note_html}'
         + (f'<div class="github-list">{"".join(github_rows)}</div>' if github_rows else "")
-        + "".join(alerts)
-        + _task_quick_actions(item)
+        + "".join(cockpit_rows)
+        + ("" if compact else _task_quick_actions(item))
         + ("" if compact else _task_secondary_html(item))
         + "</article>"
     )
@@ -1227,14 +1850,86 @@ def _summary_panel(summaries: dict[str, Any] | None) -> str:
     )
 
 
-def _plan_candidate_card(candidate: PlanCandidate, today: date) -> str:
-    reason_chips = "".join(f'<span>{escape(reason)}</span>' for reason in candidate.reasons)
-    add_button = _post_form("toggle_focus", candidate.task.key, "Add to plan")
+def _plan_meta_parts(item: TaskItem, today: date) -> list[str]:
+    parts: list[str] = []
+    if item.status:
+        parts.append(item.status)
+    if item.age_working_days is not None:
+        day_label = "working day" if item.age_working_days == 1 else "working days"
+        parts.append(f"{item.age_working_days} {day_label}")
+    due = _due_description(item, today)
+    if due:
+        parts.append(due)
+    if item.project:
+        parts.append(item.project)
+    if item.unread_updates:
+        parts.append(f"{item.unread_updates} unread")
+    return parts[:4]
+
+
+def _plan_pr_summary(item: TaskItem) -> str:
+    links = _visible_github_links(item)
+    if not links:
+        return ""
+    link = links[0]
+    label = f"PR #{link.number}" if link.number else "Linked GitHub item"
+    state = ""
+    tone = "success"
+    if link.action_reasons:
+        state = _pr_primary_issue(link)
+        tone = "danger"
+    elif link.pending_reviewers:
+        state = f"{len(link.pending_reviewers)} review pending"
+        tone = "warning"
+    elif link.checks_pending:
+        state = "CI running"
+        tone = "warning"
+    elif link.approvals:
+        state = f"{link.approvals} approved"
+    state_html = f'<span class="plan-pr-state {tone}">{escape(state)}</span>' if state else ""
     return (
-        '<div class="plan-candidate">'
-        + _task_card(candidate.task, today, compact=True)
-        + f'<div class="plan-reasons">{reason_chips}<strong>Score {candidate.score}</strong>{add_button}</div></div>'
+        '<div class="plan-pr-summary">'
+        f'<a href="{escape(link.url, quote=True)}">{escape(label)} · {escape(link.owner + "/" + link.repo)}</a>'
+        f'{state_html}</div>'
     )
+
+
+def _plan_task_card(
+    item: TaskItem,
+    today: date,
+    *,
+    candidate: PlanCandidate | None = None,
+    draggable: bool = False,
+) -> str:
+    title = escape(item.title)
+    if item.url:
+        title = f'<a href="{escape(item.url, quote=True)}">{title}</a>'
+    meta = "".join(f'<span>{escape(part)}</span>' for part in _plan_meta_parts(item, today))
+    drag_attr = ' draggable="true"' if draggable else ""
+    drag_handle = '<span class="plan-drag" title="Drag to reorder" aria-label="Drag to reorder">⋮⋮</span>' if draggable else ""
+    details = f'<button type="button" class="plan-open-button" data-plan-open="{escape(item.key, quote=True)}">View details</button>'
+    if candidate is not None:
+        visible_reasons = list(candidate.reasons[:2])
+        if len(candidate.reasons) > 2:
+            visible_reasons.append(f"+{len(candidate.reasons) - 2} more")
+        reasons = "".join(f'<span>{escape(reason)}</span>' for reason in visible_reasons)
+        footer = (
+            f'<div class="plan-reasons">{reasons}</div>'
+            f'{details}{_post_form("toggle_focus", item.key, "Add to plan", "primary")}'
+        )
+    else:
+        footer = f'{drag_handle}{details}'
+    return (
+        f'<article class="plan-item priority-{item.priority}" data-key="{escape(item.key, quote=True)}"{drag_attr}>'
+        '<div class="plan-item-title-row">'
+        f'<h3>{title}</h3>{_priority_control(item, compact=True)}</div>'
+        f'<div class="plan-item-meta">{meta}</div>{_plan_pr_summary(item)}'
+        f'<div class="plan-item-actions">{footer}</div></article>'
+    )
+
+
+def _plan_candidate_card(candidate: PlanCandidate, today: date) -> str:
+    return _plan_task_card(candidate.task, today, candidate=candidate)
 
 
 def _focus_section(
@@ -1256,7 +1951,7 @@ def _focus_section(
     if focus:
         current = (
             '<div class="section-head plan-current-head"><h3>Current plan</h3><span>Drag to reorder</span></div>'
-            f'<div id="focus-list">{"".join(_task_card(item, today, compact=True) for item in focus)}</div>'
+            f'<div id="focus-list">{"".join(_plan_task_card(item, today, draggable=True) for item in focus)}</div>'
         )
 
     if suggestions:
@@ -1507,7 +2202,7 @@ document.addEventListener('keydown',event=>{{if(event.key==='/'&&!event.metaKey&
 document.querySelectorAll('.summary-card').forEach(button=>button.addEventListener('click',()=>{{const label=button.dataset.filter||'';if(label.includes('waiting'))setView('waiting');else if(label.includes('review')||label.includes('pr'))setView('github');else if(label.includes('update'))setView('unread');else if(label.includes('action')||label.includes('due'))setView('action');else setView('all');}}));
 document.querySelectorAll('[data-view]').forEach(button=>button.classList.toggle('active',button.dataset.view===view));
 applyFilters();
-const list=document.getElementById('focus-list');if(list){{let dragged=null;list.querySelectorAll('.task').forEach(card=>{{card.addEventListener('dragstart',()=>{{dragged=card;card.classList.add('dragging')}});card.addEventListener('dragend',async()=>{{card.classList.remove('dragging');const keys=[...list.querySelectorAll('.task')].map(x=>x.dataset.key);const body=new URLSearchParams({{token,action:'focus_order',keys:keys.join(',')}});await fetch(base+'/api/action',{{method:'POST',headers:{{'Content-Type':'application/x-www-form-urlencoded'}},body}});}});}});list.addEventListener('dragover',event=>{{event.preventDefault();const after=[...list.querySelectorAll('.task:not(.dragging)')].find(el=>event.clientY<=el.getBoundingClientRect().top+el.offsetHeight/2);if(dragged){{if(after)list.insertBefore(dragged,after);else list.appendChild(dragged);}}}});}}
+const list=document.getElementById('focus-list');if(list){{let dragged=null;list.querySelectorAll('.plan-item').forEach(card=>{{card.addEventListener('dragstart',()=>{{dragged=card;card.classList.add('dragging')}});card.addEventListener('dragend',async()=>{{card.classList.remove('dragging');const keys=[...list.querySelectorAll('.plan-item')].map(x=>x.dataset.key);const body=new URLSearchParams({{token,action:'focus_order',keys:keys.join(',')}});await fetch(base+'/api/action',{{method:'POST',headers:{{'Content-Type':'application/x-www-form-urlencoded'}},body}});}});}});list.addEventListener('dragover',event=>{{event.preventDefault();const after=[...list.querySelectorAll('.plan-item:not(.dragging)')].find(el=>event.clientY<=el.getBoundingClientRect().top+el.offsetHeight/2);if(dragged){{if(after)list.insertBefore(dragged,after);else list.appendChild(dragged);}}}});}}
 const toast=document.getElementById('toast');function showToast(message,error=false){{if(!toast)return;toast.textContent=message;toast.style.background=error?'var(--danger)':'var(--text)';toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),4000);}}
 function revealCard(key,target='card'){{
   const cards=allCards.filter(card=>card.dataset.key===key);const card=cards.find(item=>!item.classList.contains('compact'))||cards[0];if(!card)return;
@@ -1517,6 +2212,7 @@ function revealCard(key,target='card'){{
   card.scrollIntoView({{behavior:'smooth',block:'center'}});card.classList.remove('palette-target');requestAnimationFrame(()=>card.classList.add('palette-target'));
   if(target==='note')setTimeout(()=>card.querySelector('textarea[name="note"]')?.focus(),450);
 }}
+document.querySelectorAll('[data-plan-open]').forEach(button=>button.addEventListener('click',()=>revealCard(button.dataset.planOpen||'')));
 async function postDashboardAction(action,key=''){{
   const body=new URLSearchParams({{token,action,key}});const response=await fetch(base+'/api/action',{{method:'POST',headers:{{'Content-Type':'application/x-www-form-urlencoded'}},body}});const payload=await response.json();if(!response.ok)throw new Error(payload.error||'Action failed');showToast(String(payload.result||'Task Digest updated'));return payload;
 }}
@@ -1546,6 +2242,21 @@ if(palette){{
     {{id:'dashboard:reset-view',label:'Reset dashboard view',detail:'Clear search, filters, expanded panels and saved scroll position',keywords:'clear restore default layout state',icon:'↺',group:'Actions',run:()=>resetDashboardState?.click()}}
   ]);
 }}
+document.querySelectorAll('[data-priority-form]').forEach(form=>{{
+  const select=form.querySelector('select[name="priority"]');if(!select)return;
+  ['pointerdown','mousedown','touchstart'].forEach(name=>select.addEventListener(name,event=>event.stopPropagation(),{{passive:true}}));
+  select.addEventListener('change',async()=>{{
+    const previous=select.dataset.previousValue??select.defaultValue;select.disabled=true;form.classList.add('is-saving');
+    try{{
+      const body=new URLSearchParams(new FormData(form));
+      const response=await fetch(base+'/api/action',{{method:'POST',headers:{{'Content-Type':'application/x-www-form-urlencoded'}},body}});
+      const payload=await response.json();if(!response.ok)throw new Error(payload.error||'Priority update failed');
+      select.dataset.previousValue=select.value;showToast(select.value?`Priority set to ${{select.options[select.selectedIndex].text}}`:'Automatic priority restored');
+      setTimeout(()=>window.location.reload(),450);
+    }}catch(error){{select.value=previous;select.disabled=false;form.classList.remove('is-saving');showToast(error.message||String(error),true);}}
+  }});
+  select.dataset.previousValue=select.value;
+}}));
 document.querySelectorAll('.asana-write-form').forEach(form=>form.addEventListener('submit',async event=>{{event.preventDefault();const question=form.dataset.confirm;if(question&&!window.confirm(question))return;const button=form.querySelector('button[type=submit]');if(button)button.disabled=true;try{{const body=new URLSearchParams(new FormData(form));const response=await fetch(base+'/api/action',{{method:'POST',headers:{{'Content-Type':'application/x-www-form-urlencoded'}},body}});const payload=await response.json();if(!response.ok)throw new Error(payload.error||'Asana update failed');showToast(String(payload.result||'Asana updated'));setTimeout(()=>window.location.reload(),700);}}catch(error){{showToast(error.message||String(error),true);if(button)button.disabled=false;}}}}));
 </script>{auto_refresh}</body></html>'''
     path = Path(output_path).expanduser().resolve()
